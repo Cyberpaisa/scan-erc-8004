@@ -1,0 +1,31 @@
+{
+    "name": "@scanner/erc8004-sdk",
+    "version": "1.0.0",
+    "private": true,
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        },
+        "./abis": {
+            "import": "./dist/abis/index.js",
+            "types": "./dist/abis/index.d.ts"
+        }
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "clean": "rm -rf dist",
+        "typecheck": "tsc --noEmit",
+        "lint": "echo 'No lint configured'"
+    },
+    "dependencies": {
+        "viem": "^2.21.0",
+        "zod": "^3.24.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.7.0"
+    }
+}

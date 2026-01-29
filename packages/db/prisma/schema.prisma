@@ -1,0 +1,306 @@
+// ==============================================
+// Avalanche Agent Scanner - Prisma Schema
+// ERC-8004 Standard Implementation
+// ==============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==============================================
+// AGENT (Identity Registry - ERC-721)
+// ==============================================
+model Agent {
+  id              Int      @id @default(autoincrement())
+  agentId         BigInt   @unique // On-chain tokenId
+  chainId         Int
+  registryAddress String   @db.VarChar(42)
+  ownerAddress    String   @db.VarChar(42)
+  
+  // AgentURI metadata (hydrated off-chain)
+  agentURI        String?  @db.Text
+  name            String?
+  description     String?  @db.Text
+  image           String?  @db.Text
+  
+  // Status fields
+  active          Boolean  @default(false)
+  x402Support     Boolean  @default(false)
+  supportedTrust  String[] @default([])
+  
+  // Integrity
+  agentHash       String?  @db.VarChar(66) // keccak256 of canonical JSON
+  
+  // On-chain metadata
+  agentWallet     String?  @db.VarChar(42)
+  
+  // Timestamps
+  registeredAt    DateTime @default(now())
+  lastIndexedAt   DateTime @default(now())
+  lastHydratedAt  DateTime?
+  
+  // Indexing info
+  registeredBlock BigInt
+  registeredTx    String   @db.VarChar(66)
+  
+  // Relations
+  endpoints       Endpoint[]
+  feedback        Feedback[]
+  validationsAsAgent     Validation[] @relation("AgentValidations")
+  scans           EndpointScan[]
+  metadataEntries AgentMetadata[]
+  
+  @@index([chainId, registryAddress])
+  @@index([ownerAddress])
+  @@index([active])
+  @@index([x402Support])
+}
+
+// ==============================================
+// AGENT ON-CHAIN METADATA
+// ==============================================
+model AgentMetadata {
+  id          Int    @id @default(autoincrement())
+  agentId     BigInt
+  metadataKey String
+  metadataValue Bytes
+  
+  agent       Agent  @relation(fields: [agentId], references: [agentId], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([agentId, metadataKey])
+  @@index([metadataKey])
+}
+
+// ==============================================
+// ENDPOINTS (from AgentURI services/endpoints)
+// ==============================================
+model Endpoint {
+  id          Int      @id @default(autoincrement())
+  agentId     BigInt
+  
+  // Endpoint definition
+  name        String   // "MCP", "A2A", "OASF", "web", "ENS", etc.
+  endpoint    String   @db.Text // URL or identifier
+  version     String?
+  
+  // Protocol-specific fields (JSON)
+  capabilities Json?   // For MCP
+  skills       Json?   // For OASF
+  domains      Json?   // For OASF
+  
+  // Trust status (from Sentinel scans)
+  isVerified  Boolean  @default(false)
+  tlsValid    Boolean?
+  dnsValid    Boolean?
+  lastChecked DateTime?
+  
+  agent       Agent    @relation(fields: [agentId], references: [agentId], onDelete: Cascade)
+  scans       EndpointScan[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([agentId])
+  @@index([name])
+}
+
+// ==============================================
+// ENDPOINT SCANS (Sentinel Trust Layer)
+// ==============================================
+model EndpointScan {
+  id          Int      @id @default(autoincrement())
+  agentId     BigInt
+  endpointId  Int?
+  
+  // Scan target
+  url         String   @db.Text
+  
+  // TLS checks
+  tlsValid    Boolean  @default(false)
+  tlsVersion  String?
+  tlsExpiry   DateTime?
+  tlsIssuer   String?
+  
+  // DNS checks
+  dnsValid    Boolean  @default(false)
+  dnsRecords  Json?
+  
+  // HTTP checks
+  httpStatus  Int?
+  httpLatency Int?     // ms
+  httpHeaders Json?
+  
+  // Security headers
+  hasHSTS     Boolean  @default(false)
+  hasCSP      Boolean  @default(false)
+  hasCORS     Boolean  @default(false)
+  
+  // Overall score
+  trustScore  Int      @default(0) // 0-100
+  
+  // Error tracking
+  error       String?  @db.Text
+  
+  scannedAt   DateTime @default(now())
+  
+  agent       Agent    @relation(fields: [agentId], references: [agentId], onDelete: Cascade)
+  endpoint    Endpoint? @relation(fields: [endpointId], references: [id], onDelete: SetNull)
+  
+  @@index([agentId])
+  @@index([trustScore])
+  @@index([scannedAt])
+}
+
+// ==============================================
+// FEEDBACK (Reputation Registry)
+// ==============================================
+model Feedback {
+  id             Int      @id @default(autoincrement())
+  agentId        BigInt
+  
+  // On-chain data
+  clientAddress  String   @db.VarChar(42)
+  feedbackIndex  BigInt
+  score          Int      // 0-100
+  tag1           String?
+  tag2           String?
+  targetEndpoint String?  @db.Text
+  feedbackURI    String?  @db.Text
+  feedbackHash   String?  @db.VarChar(66)
+  
+  // Off-chain hydration
+  feedbackContent Json?
+  
+  // Status
+  isRevoked      Boolean  @default(false)
+  revokedAt      DateTime?
+  
+  // Responses
+  responses      FeedbackResponse[]
+  
+  // Indexing info
+  createdBlock   BigInt
+  createdTx      String   @db.VarChar(66)
+  createdAt      DateTime @default(now())
+  
+  agent          Agent    @relation(fields: [agentId], references: [agentId], onDelete: Cascade)
+  
+  @@unique([agentId, clientAddress, feedbackIndex])
+  @@index([agentId])
+  @@index([clientAddress])
+  @@index([score])
+  @@index([tag1])
+}
+
+// ==============================================
+// FEEDBACK RESPONSES
+// ==============================================
+model FeedbackResponse {
+  id            Int      @id @default(autoincrement())
+  feedbackId    Int
+  
+  responderAddress String @db.VarChar(42)
+  responseURI   String?  @db.Text
+  responseHash  String?  @db.VarChar(66)
+  
+  // Off-chain hydration
+  responseContent Json?
+  
+  // Indexing info
+  createdBlock  BigInt
+  createdTx     String   @db.VarChar(66)
+  createdAt     DateTime @default(now())
+  
+  feedback      Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  
+  @@index([feedbackId])
+  @@index([responderAddress])
+}
+
+// ==============================================
+// VALIDATIONS (Validation Registry)
+// ==============================================
+model Validation {
+  id               Int      @id @default(autoincrement())
+  agentId          BigInt
+  
+  // Request
+  validatorAddress String   @db.VarChar(42)
+  requestURI       String?  @db.Text
+  requestHash      String   @db.VarChar(66) @unique
+  
+  // Off-chain hydration
+  requestContent   Json?
+  
+  // Latest response
+  response         Int?     // 0-100
+  responseURI      String?  @db.Text
+  responseHash     String?  @db.VarChar(66)
+  responseTag      String?
+  responseContent  Json?
+  
+  // Status
+  status           ValidationStatus @default(PENDING)
+  lastUpdate       DateTime?
+  
+  // Indexing info
+  requestedBlock   BigInt
+  requestedTx      String   @db.VarChar(66)
+  respondedBlock   BigInt?
+  respondedTx      String?  @db.VarChar(66)
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  agent            Agent    @relation("AgentValidations", fields: [agentId], references: [agentId], onDelete: Cascade)
+  
+  @@index([agentId])
+  @@index([validatorAddress])
+  @@index([status])
+}
+
+enum ValidationStatus {
+  PENDING
+  PASSED
+  FAILED
+  PARTIAL
+}
+
+// ==============================================
+// INDEXER STATE
+// ==============================================
+model IndexerCursor {
+  id           Int      @id @default(autoincrement())
+  chainId      Int
+  registry     String   // "identity" | "reputation" | "validation"
+  lastBlock    BigInt
+  lastTx       String?  @db.VarChar(66)
+  
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([chainId, registry])
+}
+
+// ==============================================
+// SYSTEM STATS
+// ==============================================
+model SystemStats {
+  id              Int      @id @default(autoincrement())
+  chainId         Int      @unique
+  
+  totalAgents     Int      @default(0)
+  activeAgents    Int      @default(0)
+  totalFeedback   Int      @default(0)
+  totalValidations Int     @default(0)
+  x402Agents      Int      @default(0)
+  
+  updatedAt       DateTime @updatedAt
+}

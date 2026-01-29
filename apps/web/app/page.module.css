@@ -1,0 +1,352 @@
+/* ==============================================
+   HOME PAGE STYLES
+   ============================================== */
+
+.page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10, 10, 15, 0.9);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.headerContent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.logoIcon {
+    color: var(--color-accent);
+    font-size: 28px;
+}
+
+.logoText {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.nav {
+    display: flex;
+    gap: 32px;
+}
+
+.nav a {
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    transition: color var(--transition-fast);
+}
+
+.nav a:hover {
+    color: var(--color-text-primary);
+}
+
+/* Hero */
+.hero {
+    padding: 80px 0 60px;
+    text-align: center;
+    background: var(--gradient-glow);
+}
+
+.heroTitle {
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 20px;
+}
+
+.accent {
+    color: var(--color-accent);
+    position: relative;
+}
+
+.accent::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-primary);
+    border-radius: 2px;
+}
+
+.heroSubtitle {
+    font-size: 18px;
+    color: var(--color-text-secondary);
+    max-width: 600px;
+    margin: 0 auto 48px;
+}
+
+.heroStats {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    flex-wrap: wrap;
+}
+
+.statItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.statValue {
+    font-size: 40px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1;
+}
+
+.statLabel {
+    font-size: 14px;
+    color: var(--color-text-muted);
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Main Content */
+.main {
+    flex: 1;
+    padding: 48px 0;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+}
+
+.sectionHeader h2 {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.filters {
+    display: flex;
+    gap: 12px;
+}
+
+.filterBtn {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+/* Agent Grid */
+.agentGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px;
+}
+
+.agentCard {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeIn 0.5s ease forwards;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.agentCard:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-accent);
+}
+
+.agentHeader {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.agentAvatar {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    background: var(--color-bg-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-accent);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.agentAvatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.agentInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.agentName {
+    font-size: 18px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.agentId {
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+.agentDescription {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+.agentBadges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.agentProtocols {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.protocolTag {
+    padding: 4px 10px;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+}
+
+.protocolMore {
+    padding: 4px 10px;
+    background: var(--color-bg-hover);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--color-text-muted);
+}
+
+.agentStats {
+    display: flex;
+    gap: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+    margin-top: auto;
+}
+
+.agentStat {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.agentStatValue {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.agentStatLabel {
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+/* Empty State */
+.emptyState {
+    text-align: center;
+    padding: 80px 20px;
+    background: var(--color-bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+}
+
+.emptyIcon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.emptyState h3 {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.emptyState p {
+    color: var(--color-text-secondary);
+}
+
+/* Footer */
+.footer {
+    padding: 32px 0;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+}
+
+.footerContent {
+    text-align: center;
+}
+
+.footerContent p {
+    color: var(--color-text-secondary);
+}
+
+.footerContent strong {
+    color: var(--color-accent);
+}
+
+.footerMuted {
+    color: var(--color-text-muted);
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .headerContent {
+        flex-direction: column;
+        height: auto;
+        padding: 16px 0;
+        gap: 16px;
+    }
+
+    .heroStats {
+        gap: 24px;
+    }
+
+    .sectionHeader {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
+
+    .agentGrid {
+        grid-template-columns: 1fr;
+    }
+}

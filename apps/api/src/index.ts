@@ -1,0 +1,62 @@
+/**
+ * API Server - Main Entry Point
+ */
+
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import { db } from '@scanner/db';
+import { agentRoutes } from './routes/agents.js';
+import { statsRoutes } from './routes/stats.js';
+
+const app = express();
+const PORT = process.env.API_PORT ?? 3001;
+const HOST = process.env.API_HOST ?? '0.0.0.0';
+
+// Middleware
+app.use(helmet());
+app.use(cors());
+app.use(express.json());
+
+// Health check
+app.get('/health', (_req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// API Routes
+app.use('/api/v1/agents', agentRoutes);
+app.use('/api/v1/stats', statsRoutes);
+
+// 404 handler
+app.use((_req, res) => {
+    res.status(404).json({ error: 'Not Found' });
+});
+
+// Error handler
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error('API Error:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+});
+
+// Start server
+app.listen(Number(PORT), HOST, () => {
+    console.log('=====================================');
+    console.log('ERC-8004 Agent Scanner API');
+    console.log('=====================================');
+    console.log(`Server running at http://${HOST}:${PORT}`);
+    console.log('=====================================');
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+    console.log('\nShutting down...');
+    await db.$disconnect();
+    process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+    console.log('\nShutting down...');
+    await db.$disconnect();
+    process.exit(0);
+});

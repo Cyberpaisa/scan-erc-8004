@@ -1,0 +1,14 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./dist"
+    },
+    "include": [
+        "scripts/**/*",
+        "hardhat.config.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "contracts"
+    ]
+}

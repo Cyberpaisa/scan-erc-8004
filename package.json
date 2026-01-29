@@ -1,0 +1,28 @@
+{
+  "name": "avalanche-agent-scanner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ERC-8004 Agent Scanner for Avalanche with Sentinel Trust Layer",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "echo 'Run each app separately: cd apps/api && npm run dev'",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules",
+    "db:generate": "npm run prisma:generate --workspace=@scanner/db",
+    "db:migrate": "npm run prisma:migrate --workspace=@scanner/db",
+    "db:push": "npm run prisma:push --workspace=@scanner/db",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
