@@ -9,6 +9,7 @@ import helmet from 'helmet';
 import { db } from '@scanner/db';
 import { agentRoutes } from './routes/agents.js';
 import { statsRoutes } from './routes/stats.js';
+import { taskRoutes } from './routes/tasks.js';
 
 const app = express();
 const PORT = process.env.API_PORT ?? 3001;
@@ -27,6 +28,7 @@ app.get('/health', (_req, res) => {
 // API Routes
 app.use('/api/v1/agents', agentRoutes);
 app.use('/api/v1/stats', statsRoutes);
+app.use('/api/v1/tasks', taskRoutes);
 
 // 404 handler
 app.use((_req, res) => {
