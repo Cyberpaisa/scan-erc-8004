@@ -3,7 +3,7 @@
  * Processes pending MetadataTasks in the background
  */
 
-import { db, TaskStatus } from '@scanner/db';
+import { db, TaskStatus, type MetadataTask } from '@scanner/db';
 import { safeFetchAgentMetadata, calculateAgentHash, getServices } from '@scanner/erc8004-sdk';
 import { config } from './config.js';
 
@@ -28,11 +28,11 @@ export async function runHydrationCycle(): Promise<void> {
     console.log(`[Hydration] Processing ${tasks.length} tasks...`);
 
     for (const task of tasks) {
-        await processTask(task);
+        await processTask(task as MetadataTask);
     }
 }
 
-async function processTask(task: any): Promise<void> {
+async function processTask(task: MetadataTask): Promise<void> {
     const { id, agentId, uri, attempts } = task;
 
     try {
