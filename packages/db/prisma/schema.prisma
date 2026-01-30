@@ -54,6 +54,7 @@ model Agent {
   validationsAsAgent     Validation[] @relation("AgentValidations")
   scans           EndpointScan[]
   metadataEntries AgentMetadata[]
+  metadataTasks   MetadataTask[]
   
   @@index([chainId, registryAddress])
   @@index([ownerAddress])
@@ -303,4 +304,40 @@ model SystemStats {
   x402Agents      Int      @default(0)
   
   updatedAt       DateTime @updatedAt
+}
+// ==============================================
+// BACKGROUND TASKS
+// ==============================================
+model MetadataTask {
+  id            Int           @id @default(autoincrement())
+  agentId       BigInt
+  uri           String        @db.Text
+  type          TaskType      @default(AGENT_METADATA)
+  status        TaskStatus    @default(PENDING)
+  
+  // Retry logic
+  attempts      Int           @default(0)
+  lastError     String?       @db.Text
+  nextRunAt     DateTime      @default(now())
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  agent         Agent         @relation(fields: [agentId], references: [agentId], onDelete: Cascade)
+
+  @@index([status, nextRunAt])
+  @@index([agentId])
+}
+
+enum TaskType {
+  AGENT_METADATA
+  FEEDBACK_METADATA
+  VALIDATION_METADATA
+}
+
+enum TaskStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }

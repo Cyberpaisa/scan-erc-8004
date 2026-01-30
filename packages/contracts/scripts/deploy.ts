@@ -4,6 +4,7 @@ import * as path from 'path';
 
 async function main() {
     const [deployer] = await ethers.getSigners();
+    if (!deployer) throw new Error('No deployer account found');
 
     console.log('Deploying ERC-8004 contracts with account:', deployer.address);
     console.log('Account balance:', (await ethers.provider.getBalance(deployer.address)).toString());

@@ -39,7 +39,7 @@ async function getStats(): Promise<Stats | null> {
             next: { revalidate: 60 },
         });
         if (!res.ok) return null;
-        return res.json();
+        return res.json() as Promise<Stats>;
     } catch {
         return null;
     }
@@ -51,7 +51,7 @@ async function getAgents(): Promise<Agent[]> {
             next: { revalidate: 30 },
         });
         if (!res.ok) return [];
-        const data = await res.json();
+        const data = await res.json() as { data: Agent[] };
         return data.data || [];
     } catch {
         return [];

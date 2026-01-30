@@ -49,7 +49,7 @@ async function getAgent(id: string): Promise<AgentDetails | null> {
             next: { revalidate: 30 },
         });
         if (!res.ok) return null;
-        return res.json();
+        return res.json() as Promise<AgentDetails>;
     } catch {
         return null;
     }
@@ -61,7 +61,7 @@ async function getFeedback(id: string): Promise<{ data: Feedback[]; summary: { a
             next: { revalidate: 30 },
         });
         if (!res.ok) return { data: [], summary: { averageScore: 0, totalFeedback: 0 } };
-        return res.json();
+        return res.json() as Promise<{ data: Feedback[]; summary: { averageScore: number; totalFeedback: number } }>;
     } catch {
         return { data: [], summary: { averageScore: 0, totalFeedback: 0 } };
     }

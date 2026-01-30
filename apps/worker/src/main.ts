@@ -15,6 +15,7 @@ import { config } from './config.js';
 import { handleIdentityEvents } from './handlers/identity.js';
 import { handleReputationEvents } from './handlers/reputation.js';
 import { handleValidationEvents } from './handlers/validation.js';
+import { runHydrationCycle } from './hydration.js';
 
 // ==============================================
 // SETUP
@@ -22,7 +23,10 @@ import { handleValidationEvents } from './handlers/validation.js';
 
 const client = createPublicClient({
     chain: avalancheFuji,
-    transport: http(config.rpcUrl),
+    transport: http(config.rpcUrl, {
+        retryCount: 5,
+        retryDelay: 2000,
+    }),
 });
 
 const REGISTRIES = {
@@ -74,7 +78,6 @@ async function updateCursor(registry: string, block: bigint, tx?: string): Promi
 
 async function fetchLogs(
     address: Address,
-    abi: readonly unknown[],
     fromBlock: bigint,
     toBlock: bigint
 ): Promise<Log[]> {
@@ -98,7 +101,6 @@ async function fetchLogs(
 async function indexRegistry(
     name: string,
     address: Address,
-    abi: readonly unknown[],
     handler: (logs: Log[], chainId: number, registryAddress: string) => Promise<void>
 ): Promise<void> {
     const fromBlock = await getCursor(name);
@@ -114,7 +116,7 @@ async function indexRegistry(
 
     console.log(`[${name}] Indexing blocks ${fromBlock} to ${toBlock}...`);
 
-    const logs = await fetchLogs(address, abi, fromBlock, toBlock);
+    const logs = await fetchLogs(address, fromBlock, toBlock);
 
     if (logs.length > 0) {
         console.log(`[${name}] Processing ${logs.length} events...`);
@@ -129,7 +131,6 @@ async function runIndexerCycle(): Promise<void> {
     await indexRegistry(
         'identity',
         REGISTRIES.identity,
-        IdentityRegistryABI,
         handleIdentityEvents
     );
 
@@ -137,7 +138,6 @@ async function runIndexerCycle(): Promise<void> {
     await indexRegistry(
         'reputation',
         REGISTRIES.reputation,
-        ReputationRegistryABI,
         handleReputationEvents
     );
 
@@ -145,7 +145,6 @@ async function runIndexerCycle(): Promise<void> {
     await indexRegistry(
         'validation',
         REGISTRIES.validation,
-        ValidationRegistryABI,
         handleValidationEvents
     );
 }
@@ -173,9 +172,13 @@ async function main(): Promise<void> {
     // Polling loop
     while (true) {
         try {
+            console.log('\n--- Starting Indexer Cycle ---');
             await runIndexerCycle();
+
+            console.log('\n--- Starting Hydration Cycle ---');
+            await runHydrationCycle();
         } catch (error) {
-            console.error('Indexer cycle error:', error);
+            console.error('Worker cycle error:', error);
         }
 
         await new Promise(resolve => setTimeout(resolve, config.pollIntervalMs));

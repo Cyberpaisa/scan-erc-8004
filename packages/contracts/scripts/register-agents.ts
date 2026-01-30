@@ -123,36 +123,41 @@ const TEST_AGENTS: TestAgent[] = [
 
 async function main() {
     const [deployer] = await ethers.getSigners();
+    if (!deployer) throw new Error("No deployer account found");
 
     console.log("=".repeat(60));
     console.log("Registering Test Agents");
     console.log("=".repeat(60));
     console.log("Deployer:", deployer.address);
+    console.log("Account balance:", (await ethers.provider.getBalance(deployer.address)).toString());
     console.log("");
 
     // Get Identity Registry address from environment or hardcoded
-    const identityAddress = process.env.IDENTITY_REGISTRY_ADDRESS;
+    const IDENTITY_REGISTRY_ADDRESS = process.env.IDENTITY_REGISTRY_ADDRESS;
 
-    if (!identityAddress) {
+    if (!IDENTITY_REGISTRY_ADDRESS) {
         console.error("ERROR: IDENTITY_REGISTRY_ADDRESS not set");
         console.error("Please set it in .env or as environment variable");
         process.exit(1);
     }
 
-    console.log("Identity Registry:", identityAddress);
+    console.log("Identity Registry:", IDENTITY_REGISTRY_ADDRESS);
     console.log("");
 
-    // Get contract instance
-    const IdentityRegistry = await ethers.getContractFactory("IdentityRegistry");
-    const registry = IdentityRegistry.attach(identityAddress);
+    // Connect to registry
+    const registry = await ethers.getContractAt("IdentityRegistry", IDENTITY_REGISTRY_ADDRESS);
+
+    console.log("\nStarting registration...");
 
     // Register each agent
     for (let i = 0; i < TEST_AGENTS.length; i++) {
         const agent = TEST_AGENTS[i];
+        if (!agent) continue;
+
         console.log(`[${i + 1}/${TEST_AGENTS.length}] Registering: ${agent.name}`);
 
         try {
-            const tx = await registry.register(agent.agentURI);
+            const tx = await (registry as any).register(agent.agentURI);
             const receipt = await tx.wait();
 
             // Find the Registered event to get the agentId

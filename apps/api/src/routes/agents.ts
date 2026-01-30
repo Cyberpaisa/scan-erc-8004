@@ -83,7 +83,7 @@ agentRoutes.get('/', async (req: Request, res: Response) => {
         ]);
 
         // Transform response
-        const data = agents.map(agent => ({
+        const data = agents.map((agent: any) => ({
             id: agent.id,
             agentId: agent.agentId.toString(),
             chainId: agent.chainId,
@@ -112,9 +112,11 @@ agentRoutes.get('/', async (req: Request, res: Response) => {
                 totalPages: Math.ceil(total / limitNum),
             },
         });
+        return;
     } catch (error) {
         console.error('Error listing agents:', error);
         res.status(500).json({ error: 'Failed to list agents' });
+        return;
     }
 });
 
@@ -128,7 +130,7 @@ agentRoutes.get('/:id', async (req: Request, res: Response) => {
 
         // Try to find by agentId (on-chain ID) first, then by database id
         let agent;
-        const numericId = parseInt(id!, 10);
+        const numericId = parseInt(id as string, 10);
 
         if (!isNaN(numericId)) {
             agent = await db.agent.findFirst({
@@ -150,7 +152,8 @@ agentRoutes.get('/:id', async (req: Request, res: Response) => {
         }
 
         if (!agent) {
-            return res.status(404).json({ error: 'Agent not found' });
+            res.status(404).json({ error: 'Agent not found' });
+            return;
         }
 
         res.json({
@@ -169,7 +172,7 @@ agentRoutes.get('/:id', async (req: Request, res: Response) => {
             agentHash: agent.agentHash,
             agentWallet: agent.agentWallet,
             endpoints: agent.endpoints,
-            metadata: agent.metadataEntries.map(m => ({
+            metadata: agent.metadataEntries.map((m: any) => ({
                 key: m.metadataKey,
                 value: m.metadataValue.toString('hex'),
             })),
@@ -180,9 +183,11 @@ agentRoutes.get('/:id', async (req: Request, res: Response) => {
             lastIndexedAt: agent.lastIndexedAt,
             lastHydratedAt: agent.lastHydratedAt,
         });
+        return;
     } catch (error) {
         console.error('Error getting agent:', error);
         res.status(500).json({ error: 'Failed to get agent' });
+        return;
     }
 });
 
@@ -198,9 +203,10 @@ agentRoutes.get('/:id/feedback', async (req: Request, res: Response) => {
         const pageNum = Math.max(1, parseInt(page as string, 10));
         const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10)));
 
-        const numericId = parseInt(id!, 10);
+        const numericId = parseInt(id as string, 10);
         if (isNaN(numericId)) {
-            return res.status(400).json({ error: 'Invalid agent ID' });
+            res.status(400).json({ error: 'Invalid agent ID' });
+            return;
         }
 
         // Find agent
@@ -214,7 +220,8 @@ agentRoutes.get('/:id/feedback', async (req: Request, res: Response) => {
         });
 
         if (!agent) {
-            return res.status(404).json({ error: 'Agent not found' });
+            res.status(404).json({ error: 'Agent not found' });
+            return;
         }
 
         const [feedback, total] = await Promise.all([
@@ -238,7 +245,7 @@ agentRoutes.get('/:id/feedback', async (req: Request, res: Response) => {
         });
 
         res.json({
-            data: feedback.map(f => ({
+            data: feedback.map((f: any) => ({
                 id: f.id,
                 clientAddress: f.clientAddress,
                 feedbackIndex: f.feedbackIndex.toString(),
@@ -262,9 +269,11 @@ agentRoutes.get('/:id/feedback', async (req: Request, res: Response) => {
                 totalPages: Math.ceil(total / limitNum),
             },
         });
+        return;
     } catch (error) {
         console.error('Error getting feedback:', error);
         res.status(500).json({ error: 'Failed to get feedback' });
+        return;
     }
 });
 
@@ -280,9 +289,10 @@ agentRoutes.get('/:id/validations', async (req: Request, res: Response) => {
         const pageNum = Math.max(1, parseInt(page as string, 10));
         const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10)));
 
-        const numericId = parseInt(id!, 10);
+        const numericId = parseInt(id as string, 10);
         if (isNaN(numericId)) {
-            return res.status(400).json({ error: 'Invalid agent ID' });
+            res.status(400).json({ error: 'Invalid agent ID' });
+            return;
         }
 
         // Find agent
@@ -296,7 +306,8 @@ agentRoutes.get('/:id/validations', async (req: Request, res: Response) => {
         });
 
         if (!agent) {
-            return res.status(404).json({ error: 'Agent not found' });
+            res.status(404).json({ error: 'Agent not found' });
+            return;
         }
 
         const [validations, total] = await Promise.all([
@@ -310,7 +321,7 @@ agentRoutes.get('/:id/validations', async (req: Request, res: Response) => {
         ]);
 
         res.json({
-            data: validations.map(v => ({
+            data: validations.map((v: any) => ({
                 id: v.id,
                 validatorAddress: v.validatorAddress,
                 requestHash: v.requestHash,
@@ -329,8 +340,10 @@ agentRoutes.get('/:id/validations', async (req: Request, res: Response) => {
                 totalPages: Math.ceil(total / limitNum),
             },
         });
+        return;
     } catch (error) {
         console.error('Error getting validations:', error);
         res.status(500).json({ error: 'Failed to get validations' });
+        return;
     }
 });

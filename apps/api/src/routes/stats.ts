@@ -50,15 +50,17 @@ statsRoutes.get('/', async (_req: Request, res: Response) => {
             },
             endpoints: {
                 total: totalEndpoints,
-                byProtocol: protocolStats.map(p => ({
+                byProtocol: protocolStats.map((p: any) => ({
                     protocol: p.name,
                     count: p._count.name,
                 })),
             },
         });
+        return;
     } catch (error) {
         console.error('Error getting stats:', error);
         res.status(500).json({ error: 'Failed to get stats' });
+        return;
     }
 });
 
@@ -107,21 +109,23 @@ statsRoutes.get('/activity', async (req: Request, res: Response) => {
         ]);
 
         res.json({
-            recentAgents: recentAgents.map(a => ({
+            recentAgents: recentAgents.map((a: any) => ({
                 ...a,
                 agentId: a.agentId.toString(),
             })),
-            recentFeedback: recentFeedback.map(f => ({
+            recentFeedback: recentFeedback.map((f: any) => ({
                 ...f,
                 agentId: f.agentId.toString(),
             })),
-            recentValidations: recentValidations.map(v => ({
+            recentValidations: recentValidations.map((v: any) => ({
                 ...v,
                 agentId: v.agentId.toString(),
             })),
         });
+        return;
     } catch (error) {
         console.error('Error getting activity:', error);
         res.status(500).json({ error: 'Failed to get activity' });
+        return;
     }
 });

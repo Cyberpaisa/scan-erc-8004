@@ -1,12 +1,6 @@
-/**
- * Identity Registry Event Handlers
- * Handles: Registered, URIUpdated, MetadataSet
- */
-
 import { type Log, decodeEventLog } from 'viem';
 import { db } from '@scanner/db';
-import { IdentityRegistryABI, safeFetchAgentMetadata, calculateAgentHash, getServices } from '@scanner/erc8004-sdk';
-import { config } from '../config.js';
+import { IdentityRegistryABI } from '@scanner/erc8004-sdk';
 
 interface RegisteredArgs {
     agentId: bigint;
@@ -95,15 +89,23 @@ async function handleRegistered(
         },
     });
 
-    // Hydrate metadata if URI exists
+    // Create async hydration task
     if (args.agentURI) {
-        await hydrateAgentMetadata(agent.agentId, args.agentURI);
+        await db.metadataTask.create({
+            data: {
+                agentId: agent.agentId,
+                uri: args.agentURI,
+                type: 'AGENT_METADATA',
+                status: 'PENDING',
+            },
+        });
+        console.log(`    → Created hydration task for Agent #${agent.agentId}`);
     }
 }
 
 async function handleURIUpdated(
     args: URIUpdatedArgs,
-    log: Log
+    _log: Log
 ): Promise<void> {
     console.log(`  → URIUpdated: Agent #${args.agentId} → ${args.newURI.slice(0, 50)}...`);
 
@@ -115,8 +117,16 @@ async function handleURIUpdated(
         },
     });
 
-    // Re-hydrate metadata
-    await hydrateAgentMetadata(args.agentId, args.newURI);
+    // Create async hydration task for updated URI
+    await db.metadataTask.create({
+        data: {
+            agentId: args.agentId,
+            uri: args.newURI,
+            type: 'AGENT_METADATA',
+            status: 'PENDING',
+        },
+    });
+    console.log(`    → Created hydration task (update) for Agent #${args.agentId}`);
 }
 
 async function handleMetadataSet(
@@ -145,66 +155,4 @@ async function handleMetadataSet(
             updatedAt: new Date(),
         },
     });
-}
-
-// ==============================================
-// METADATA HYDRATION
-// ==============================================
-
-async function hydrateAgentMetadata(agentId: bigint, uri: string): Promise<void> {
-    try {
-        const metadata = await safeFetchAgentMetadata(uri, {
-            ipfsGateway: config.ipfsGateway,
-            arweaveGateway: config.arweaveGateway,
-            timeout: 30000,
-        });
-
-        if (!metadata) {
-            console.log(`    ⚠ Failed to fetch metadata for Agent #${agentId}`);
-            return;
-        }
-
-        // Calculate hash
-        const agentHash = calculateAgentHash(metadata);
-
-        // Get services (handles both services and legacy endpoints)
-        const services = getServices(metadata);
-
-        // Update agent with hydrated data
-        await db.agent.update({
-            where: { agentId },
-            data: {
-                name: metadata.name,
-                description: metadata.description,
-                image: metadata.image,
-                active: metadata.active ?? false,
-                x402Support: metadata.x402Support ?? false,
-                supportedTrust: metadata.supportedTrust ?? [],
-                agentHash,
-                lastHydratedAt: new Date(),
-            },
-        });
-
-        // Delete old endpoints and create new ones
-        await db.endpoint.deleteMany({ where: { agentId } });
-
-        for (const service of services) {
-            await db.endpoint.create({
-                data: {
-                    agentId,
-                    name: service.name,
-                    endpoint: service.endpoint,
-                    version: service.version,
-                    capabilities: service.capabilities ? { data: service.capabilities } : undefined,
-                    skills: service.skills ? { data: service.skills } : undefined,
-                    domains: service.domains ? { data: service.domains } : undefined,
-                },
-            });
-        }
-
-        console.log(`    ✓ Hydrated Agent #${agentId}: "${metadata.name}" with ${services.length} endpoints`);
-
-    } catch (error) {
-        console.error(`    ✗ Hydration error for Agent #${agentId}:`, error);
-    }
 }
