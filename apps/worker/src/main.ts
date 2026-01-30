@@ -6,11 +6,6 @@
 import { createPublicClient, http, type Log, type Address } from 'viem';
 import { avalancheFuji } from 'viem/chains';
 import { db } from '@scanner/db';
-import {
-    IdentityRegistryABI,
-    ReputationRegistryABI,
-    ValidationRegistryABI,
-} from '@scanner/erc8004-sdk';
 import { config } from './config.js';
 import { handleIdentityEvents } from './handlers/identity.js';
 import { handleReputationEvents } from './handlers/reputation.js';
@@ -101,7 +96,7 @@ async function fetchLogs(
 async function indexRegistry(
     name: string,
     address: Address,
-    handler: (logs: Log[], chainId: number, registryAddress: string) => Promise<void>
+    handler: (logs: Log[], _chainId: number, _registryAddress: string) => Promise<void>
 ): Promise<void> {
     const fromBlock = await getCursor(name);
     const currentBlock = await client.getBlockNumber();

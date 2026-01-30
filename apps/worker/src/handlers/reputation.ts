@@ -37,8 +37,8 @@ interface ResponseAppendedArgs {
 
 export async function handleReputationEvents(
     logs: Log[],
-    chainId: number,
-    registryAddress: string
+    _chainId: number,
+    _registryAddress: string
 ): Promise<void> {
     for (const log of logs) {
         try {

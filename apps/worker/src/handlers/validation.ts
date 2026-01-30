@@ -26,8 +26,8 @@ interface ValidationResponseArgs {
 
 export async function handleValidationEvents(
     logs: Log[],
-    chainId: number,
-    registryAddress: string
+    _chainId: number,
+    _registryAddress: string
 ): Promise<void> {
     for (const log of logs) {
         try {
