@@ -225,6 +225,52 @@
     line-height: 1.5;
 }
 
+.trustScoreWrapper {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+}
+
+.trustScoreCircle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: conic-gradient(var(--color-accent) calc(var(--score) * 1%), var(--color-bg-hover) 0);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+}
+
+.trustScoreCircle::after {
+    content: '';
+    position: absolute;
+    width: 38px;
+    height: 38px;
+    background: var(--color-bg-card);
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.trustValue {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    position: relative;
+    z-index: 2;
+    line-height: 1;
+}
+
+.trustLabel {
+    font-size: 8px;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    position: relative;
+    z-index: 2;
+}
+
 .agentBadges {
     display: flex;
     flex-wrap: wrap;

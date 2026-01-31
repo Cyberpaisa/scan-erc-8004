@@ -11,12 +11,15 @@ interface Agent {
     image: string | null;
     active: boolean;
     x402Support: boolean;
+    isA2AVerified: boolean;
+    complianceScore: number;
     supportedTrust: string[];
     endpoints: Array<{
         id: number;
         name: string;
         endpoint: string;
         isVerified: boolean;
+        a2aVerified: boolean;
     }>;
     feedbackCount: number;
     validationCount: number;
@@ -140,6 +143,12 @@ export default async function HomePage() {
                                     className={`card ${styles.agentCard}`}
                                     style={{ animationDelay: `${index * 50}ms` }}
                                 >
+                                    <div className={styles.trustScoreWrapper}>
+                                        <div className={styles.trustScoreCircle} style={{ '--score': agent.complianceScore } as any}>
+                                            <span className={styles.trustValue}>{agent.complianceScore}</span>
+                                            <span className={styles.trustLabel}>Trust</span>
+                                        </div>
+                                    </div>
                                     <div className={styles.agentHeader}>
                                         <div className={styles.agentAvatar}>
                                             {agent.image ? (
@@ -166,6 +175,9 @@ export default async function HomePage() {
                                     <div className={styles.agentBadges}>
                                         {agent.active && (
                                             <span className="badge badge-success">● Active</span>
+                                        )}
+                                        {agent.isA2AVerified && (
+                                            <span className="badge badge-primary">A2A Verified</span>
                                         )}
                                         {agent.x402Support && (
                                             <span className="badge badge-accent">x402</span>

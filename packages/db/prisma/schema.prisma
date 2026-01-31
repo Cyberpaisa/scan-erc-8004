@@ -31,6 +31,8 @@ model Agent {
   // Status fields
   active          Boolean  @default(false)
   x402Support     Boolean  @default(false)
+  isA2AVerified   Boolean  @default(false)
+  complianceScore Int      @default(0)
   supportedTrust  String[] @default([])
   
   // Integrity
@@ -53,6 +55,7 @@ model Agent {
   feedback        Feedback[]
   validationsAsAgent     Validation[] @relation("AgentValidations")
   scans           EndpointScan[]
+  scanJobs        ScanJob[]
   metadataEntries AgentMetadata[]
   metadataTasks   MetadataTask[]
   
@@ -101,10 +104,12 @@ model Endpoint {
   isVerified  Boolean  @default(false)
   tlsValid    Boolean?
   dnsValid    Boolean?
+  a2aVerified Boolean  @default(false)
   lastChecked DateTime?
   
   agent       Agent    @relation(fields: [agentId], references: [agentId], onDelete: Cascade)
   scans       EndpointScan[]
+  scanJobs    ScanJob[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -340,4 +345,33 @@ enum TaskStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+// ==============================================
+// SCAN JOBS (Decoupled Sentinel Queue)
+// ==============================================
+model ScanJob {
+  id            Int           @id @default(autoincrement())
+  agentId       BigInt
+  endpointId    Int?
+  url           String        @db.Text
+  status        TaskStatus    @default(PENDING)
+  
+  // Handshake details
+  challenge     String?       // Nonce sent to agent
+  signature     String?       // Response from agent
+  
+  // Retry logic
+  attempts      Int           @default(0)
+  lastError     String?       @db.Text
+  nextRunAt     DateTime      @default(now())
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  agent         Agent         @relation(fields: [agentId], references: [agentId], onDelete: Cascade)
+  endpoint      Endpoint?     @relation(fields: [endpointId], references: [id], onDelete: SetNull)
+
+  @@index([status, nextRunAt])
+  @@index([agentId])
 }
