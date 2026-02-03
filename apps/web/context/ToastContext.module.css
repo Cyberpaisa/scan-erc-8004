@@ -1,0 +1,114 @@
+.toastContainer {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.toast {
+    pointer-events: auto;
+    min-width: 300px;
+    max-width: 450px;
+    background: rgba(10, 10, 15, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: slideIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.toastContent {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toastIcon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.toastMessage {
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.toastSuccess {
+    border-left: 4px solid #00ff88;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
+}
+
+.toastSuccess .toastIcon {
+    background: #00ff88;
+    color: #000;
+}
+
+.toastError {
+    border-left: 4px solid #ff4444;
+    box-shadow: 0 0 20px rgba(255, 68, 68, 0.1);
+}
+
+.toastError .toastIcon {
+    background: #ff4444;
+    color: white;
+}
+
+.toastInfo {
+    border-left: 4px solid #00d2ff;
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.1);
+}
+
+.toastInfo .toastIcon {
+    background: #00d2ff;
+    color: #000;
+}
+
+.toastProgress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    width: 100%;
+    animation: progress 5s linear forwards;
+}
+
+@keyframes progress {
+    from {
+        width: 100%;
+    }
+
+    to {
+        width: 0%;
+    }
+}

@@ -11,6 +11,11 @@ import { agentRoutes } from './routes/agents.js';
 import { statsRoutes } from './routes/stats.js';
 import { taskRoutes } from './routes/tasks.js';
 
+// BigInt Serialization fix for Express
+(BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+};
+
 const app = express();
 const PORT = process.env.API_PORT ?? 3001;
 const HOST = process.env.API_HOST ?? '0.0.0.0';

@@ -1,6 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { db } from '@scanner/db';
 
+// Global BigInt to JSON conversion
+// This is critical for data-heavy on-chain applications
+(BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+};
+
 const taskRoutes = Router();
 
 /**
@@ -42,6 +48,10 @@ taskRoutes.get('/', async (req: Request, res: Response) => {
             data: tasks.map(t => ({
                 ...t,
                 agentId: t.agentId.toString(),
+                agent: t.agent ? {
+                    ...t.agent,
+                    agentId: t.agent.agentId.toString()
+                } : null
             })),
             pagination: {
                 total,
@@ -50,6 +60,7 @@ taskRoutes.get('/', async (req: Request, res: Response) => {
                 totalPages: Math.ceil(total / limitNum),
             }
         });
+        Broadway:
         return;
     } catch (error) {
         console.error('Error fetching tasks:', error);

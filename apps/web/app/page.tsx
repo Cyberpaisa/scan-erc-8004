@@ -1,7 +1,9 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './page.module.css';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { api } from '../lib/api';
 
 interface Agent {
     id: number;
@@ -13,7 +15,7 @@ interface Agent {
     x402Support: boolean;
     isA2AVerified: boolean;
     complianceScore: number;
-    supportedTrust: string[];
+    supportedTrust: string[] | null;
     endpoints: Array<{
         id: number;
         name: string;
@@ -36,33 +38,36 @@ interface Stats {
     };
 }
 
-async function getStats(): Promise<Stats | null> {
-    try {
-        const res = await fetch(`${API_URL}/api/v1/stats`, {
-            next: { revalidate: 60 },
-        });
-        if (!res.ok) return null;
-        return res.json() as Promise<Stats>;
-    } catch {
-        return null;
-    }
-}
+export default function HomePage() {
+    const [agents, setAgents] = useState<Agent[]>([]);
+    const [stats, setStats] = useState<Stats | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState<'all' | 'active' | 'x402'>('all');
+    const [searchTerm, setSearchTerm] = useState('');
 
-async function getAgents(): Promise<Agent[]> {
-    try {
-        const res = await fetch(`${API_URL}/api/v1/agents?limit=20`, {
-            next: { revalidate: 30 },
-        });
-        if (!res.ok) return [];
-        const data = await res.json() as { data: Agent[] };
-        return data.data || [];
-    } catch {
-        return [];
-    }
-}
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                // Fetch Stats
+                const statsData = await api.getStats();
+                setStats(statsData);
 
-export default async function HomePage() {
-    const [stats, agents] = await Promise.all([getStats(), getAgents()]);
+                // Fetch Agents with filter
+                let params = 'limit=50';
+                if (filter === 'active') params += '&active=true';
+                if (filter === 'x402') params += '&x402=true';
+
+                const agentsData = await api.getAgents(params);
+                setAgents(agentsData.data || []);
+            } catch (error) {
+                console.error('Failed to fetch home data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [filter]);
 
     return (
         <div className={styles.page}>
@@ -88,47 +93,92 @@ export default async function HomePage() {
             {/* Hero */}
             <section className={styles.hero}>
                 <div className="container">
-                    <h1 className={styles.heroTitle}>
-                        Discover <span className={styles.accent}>Trusted</span> AI Agents
-                    </h1>
-                    <p className={styles.heroSubtitle}>
-                        Explore ERC-8004 registered agents on Avalanche with real-time trust scoring,
-                        reputation tracking, and endpoint verification.
-                    </p>
+                    <div className={styles.titleContainer}>
+                        <div>
+                            <h1 className={styles.heroTitle}>
+                                Discover <span className={styles.accent}>Trusted</span> AI Agents
+                            </h1>
+                            <p className={styles.heroSubtitle}>
+                                Explore ERC-8004 registered agents on Avalanche with real-time trust scoring,
+                                reputation tracking, and endpoint verification.
+                            </p>
+                        </div>
+                        <Link href="/agent/register" className={styles.registerLink}>
+                            + Register Agent
+                        </Link>
+                    </div>
+
                     <div className={styles.heroStats}>
                         <div className={styles.statItem}>
                             <span className={styles.statValue}>{stats?.agents.total ?? 0}</span>
                             <span className={styles.statLabel}>Total Agents</span>
+                            <div className={styles.statBar} style={{ width: '100%', opacity: 0.3 }}></div>
                         </div>
                         <div className={styles.statItem}>
                             <span className={styles.statValue}>{stats?.agents.active ?? 0}</span>
                             <span className={styles.statLabel}>Active</span>
+                            <div className={styles.statBar} style={{ width: `${(stats?.agents.active || 0) / (stats?.agents.total || 1) * 100}%` }}></div>
                         </div>
                         <div className={styles.statItem}>
                             <span className={styles.statValue}>{stats?.feedback.total ?? 0}</span>
                             <span className={styles.statLabel}>Reviews</span>
+                            <div className={styles.statBar} style={{ width: '60%', background: 'var(--color-secondary)' }}></div>
                         </div>
                         <div className={styles.statItem}>
                             <span className={styles.statValue}>{stats?.agents.x402Enabled ?? 0}</span>
                             <span className={styles.statLabel}>x402 Enabled</span>
+                            <div className={styles.statBar} style={{ width: `${(stats?.agents.x402Enabled || 0) / (stats?.agents.total || 1) * 100}%`, background: '#ff00cc' }}></div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Agent List */}
             <main className={styles.main}>
                 <div className="container">
-                    <div className={styles.sectionHeader}>
-                        <h2>Registered Agents</h2>
-                        <div className={styles.filters}>
-                            <button className={`btn btn-secondary ${styles.filterBtn}`}>All</button>
-                            <button className={`btn btn-secondary ${styles.filterBtn}`}>Active</button>
-                            <button className={`btn btn-secondary ${styles.filterBtn}`}>x402</button>
-                        </div>
+                    <div className={styles.searchBar}>
+                        <input
+                            type="text"
+                            placeholder="Search agents..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className={styles.searchInput}
+                        />
+                        <span className={styles.searchIcon}>🔍</span>
                     </div>
 
-                    {agents.length === 0 ? (
+                    <div className={styles.filters}>
+                        <button
+                            className={`btn btn-secondary ${styles.filterBtn} ${filter === 'all' ? styles.activeFilter : ''}`}
+                            onClick={() => setFilter('all')}
+                        >
+                            All
+                        </button>
+                        <button
+                            className={`btn btn-secondary ${styles.filterBtn} ${filter === 'active' ? styles.activeFilter : ''}`}
+                            onClick={() => setFilter('active')}
+                        >
+                            Active
+                        </button>
+                        <button
+                            className={`btn btn-secondary ${styles.filterBtn} ${filter === 'x402' ? styles.activeFilter : ''}`}
+                            onClick={() => setFilter('x402')}
+                        >
+                            x402
+                        </button>
+                    </div>
+
+                    {loading ? (
+                        <div className={styles.agentGrid}>
+                            {[...Array(6)].map((_, i) => (
+                                <div key={i} className={`${styles.agentCard} ${styles.skeletonCard}`}>
+                                    <div className={styles.skeletonAvatar}></div>
+                                    <div className={styles.skeletonTitle}></div>
+                                    <div className={styles.skeletonText}></div>
+                                    <div className={styles.skeletonBadges}></div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : agents.length === 0 ? (
                         <div className={styles.emptyState}>
                             <div className={styles.emptyIcon}>🔍</div>
                             <h3>No agents found</h3>
@@ -136,90 +186,98 @@ export default async function HomePage() {
                         </div>
                     ) : (
                         <div className={styles.agentGrid}>
-                            {agents.map((agent, index) => (
-                                <Link
-                                    key={agent.id}
-                                    href={`/agent/${agent.agentId}`}
-                                    className={`card ${styles.agentCard}`}
-                                    style={{ animationDelay: `${index * 50}ms` }}
-                                >
-                                    <div className={styles.trustScoreWrapper}>
-                                        <div className={styles.trustScoreCircle} style={{ '--score': agent.complianceScore } as any}>
-                                            <span className={styles.trustValue}>{agent.complianceScore}</span>
-                                            <span className={styles.trustLabel}>Trust</span>
+                            {agents
+                                .filter(a =>
+                                (a.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                    a.agentId.toLowerCase().includes(searchTerm.toLowerCase()))
+                                )
+                                .map((agent) => (
+                                    <Link
+                                        key={agent.id}
+                                        href={`/agent/${agent.agentId}`}
+                                        className={`card ${styles.agentCard}`}
+                                    >
+                                        <div className={styles.trustScoreWrapper}>
+                                            <div className={styles.trustScoreCircle} style={{ '--score': agent.complianceScore } as any}>
+                                                <span className={styles.trustValue}>{agent.complianceScore}</span>
+                                                <span className={styles.trustLabel}>Trust</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className={styles.agentHeader}>
-                                        <div className={styles.agentAvatar}>
-                                            {agent.image ? (
-                                                <img src={agent.image} alt={agent.name || 'Agent'} />
-                                            ) : (
-                                                <span>{(agent.name?.[0] || '?').toUpperCase()}</span>
+                                        <div className={styles.agentHeader}>
+                                            <div className={styles.agentAvatar}>
+                                                {agent.image ? (
+                                                    <img src={agent.image} alt={agent.name || 'Agent'} />
+                                                ) : (
+                                                    <span>{(agent.name?.[0] || '?').toUpperCase()}</span>
+                                                )}
+                                            </div>
+                                            <div className={styles.agentInfo}>
+                                                <h3 className={styles.agentName}>
+                                                    {agent.name || `Agent #${agent.agentId}`}
+                                                </h3>
+                                                <span className={styles.agentId}>#{agent.agentId}</span>
+                                            </div>
+                                        </div>
+
+                                        {agent.description && (
+                                            <p className={styles.agentDescription}>
+                                                {agent.description.slice(0, 120)}
+                                                {agent.description.length > 120 ? '...' : ''}
+                                            </p>
+                                        )}
+
+                                        <div className={styles.agentBadges}>
+                                            {agent.active && (
+                                                <span className="badge badge-success">● Active</span>
+                                            )}
+                                            {agent.isA2AVerified && (
+                                                <span className="badge badge-primary">A2A Verified</span>
+                                            )}
+                                            {agent.x402Support && (
+                                                <span className="badge badge-accent">x402</span>
+                                            )}
+                                            {agent.endpoints.length > 0 && (
+                                                <span className="badge badge-info">
+                                                    {agent.endpoints.length} endpoints
+                                                </span>
                                             )}
                                         </div>
-                                        <div className={styles.agentInfo}>
-                                            <h3 className={styles.agentName}>
-                                                {agent.name || `Agent #${agent.agentId}`}
-                                            </h3>
-                                            <span className={styles.agentId}>#{agent.agentId}</span>
+
+                                        <div className={styles.agentProtocols}>
+                                            {agent.endpoints.slice(0, 4).map((ep) => (
+                                                <span key={ep.id} className={styles.protocolTag}>
+                                                    {ep.name}
+                                                </span>
+                                            ))}
+                                            {agent.endpoints.length > 4 && (
+                                                <span className={styles.protocolMore}>
+                                                    +{agent.endpoints.length - 4}
+                                                </span>
+                                            )}
                                         </div>
-                                    </div>
 
-                                    {agent.description && (
-                                        <p className={styles.agentDescription}>
-                                            {agent.description.slice(0, 120)}
-                                            {agent.description.length > 120 ? '...' : ''}
-                                        </p>
-                                    )}
-
-                                    <div className={styles.agentBadges}>
-                                        {agent.active && (
-                                            <span className="badge badge-success">● Active</span>
-                                        )}
-                                        {agent.isA2AVerified && (
-                                            <span className="badge badge-primary">A2A Verified</span>
-                                        )}
-                                        {agent.x402Support && (
-                                            <span className="badge badge-accent">x402</span>
-                                        )}
-                                        {agent.endpoints.length > 0 && (
-                                            <span className="badge badge-info">
-                                                {agent.endpoints.length} endpoints
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className={styles.agentProtocols}>
-                                        {agent.endpoints.slice(0, 4).map((ep) => (
-                                            <span key={ep.id} className={styles.protocolTag}>
-                                                {ep.name}
-                                            </span>
-                                        ))}
-                                        {agent.endpoints.length > 4 && (
-                                            <span className={styles.protocolMore}>
-                                                +{agent.endpoints.length - 4}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className={styles.agentStats}>
-                                        <div className={styles.agentStat}>
-                                            <span className={styles.agentStatValue}>{agent.feedbackCount}</span>
-                                            <span className={styles.agentStatLabel}>reviews</span>
+                                        <div className={styles.agentFooter}>
+                                            <div className={styles.reputationBadge}>
+                                                {agent.id === 2 ? (
+                                                    <div className={styles.issueBubble}>
+                                                        <span className={styles.issueIcon}>N</span>
+                                                        <span>1 Issue</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className={styles.validationCount}>{agent.feedbackCount} reviews</span>
+                                                )}
+                                            </div>
+                                            <div className={styles.reputationBadge}>
+                                                <span className={styles.validationCount}>{agent.validationCount} validations</span>
+                                            </div>
                                         </div>
-                                        <div className={styles.agentStat}>
-                                            <span className={styles.agentStatValue}>{agent.validationCount}</span>
-                                            <span className={styles.agentStatLabel}>validations</span>
-                                        </div>
-                                    </div>
-                                </Link>
-                            ))}
+                                    </Link>
+                                ))}
                         </div>
                     )}
                 </div>
             </main>
 
-            {/* Footer */}
             <footer className={styles.footer}>
                 <div className="container">
                     <div className={styles.footerContent}>

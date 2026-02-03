@@ -352,3 +352,86 @@ agentRoutes.get('/:id/validations', async (req: Request, res: Response) => {
         return;
     }
 });
+
+// ==============================================
+// CREATE AGENT (Ralph Method Manual Entry)
+// ==============================================
+agentRoutes.post('/', async (req: Request, res: Response) => {
+    try {
+        const { name, description, image, endpoints, x402Support, agentId } = req.body;
+
+        if (!name || (agentId === undefined && !name)) {
+            res.status(400).json({ error: 'Name and Agent ID are required' });
+            return;
+        }
+
+        const agent = await db.agent.create({
+            data: {
+                agentId: BigInt(agentId || Math.floor(Math.random() * 1000000)),
+                name,
+                description,
+                image,
+                x402Support: !!x402Support,
+                active: true,
+                complianceScore: 0,
+                registryAddress: '0xLocalManualEntry',
+                ownerAddress: '0x1234567890123456789012345678901234567890',
+                chainId: 43113,
+                registeredBlock: BigInt(0),
+                registeredTx: '0xmanual',
+                endpoints: {
+                    create: (endpoints || []).map((ep: any) => ({
+                        name: ep.name,
+                        endpoint: ep.url,
+                    })),
+                },
+            },
+        });
+
+        res.status(201).json({
+            ...agent,
+            agentId: agent.agentId.toString(),
+            registeredBlock: agent.registeredBlock.toString(),
+        });
+        return;
+    } catch (error: any) {
+        console.error('Error creating agent:', error);
+        res.status(500).json({ error: error.message || 'Failed to create agent' });
+        return;
+    }
+});
+
+// ==============================================
+// VALIDATE AGENT (On-Demand)
+// ==============================================
+agentRoutes.post('/:id/validate', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const numericId = parseInt(id, 10);
+
+        const agent = await db.agent.findFirst({
+            where: {
+                OR: [{ id: numericId }, { agentId: BigInt(numericId) }],
+            },
+            include: { endpoints: true },
+        });
+
+        if (!agent) {
+            res.status(404).json({ error: 'Agent not found' });
+            return;
+        }
+
+        // Trigger scan by resetting lastChecked on all endpoints
+        await db.endpoint.updateMany({
+            where: { agentId: agent.agentId },
+            data: { lastChecked: null },
+        });
+
+        res.json({ message: 'Validation triggered. The scanner will process it momentarily.' });
+        return;
+    } catch (error: any) {
+        console.error('Error triggering validation:', error);
+        res.status(500).json({ error: 'Failed to trigger validation' });
+        return;
+    }
+});

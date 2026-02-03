@@ -8,8 +8,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // ==============================================
@@ -19,27 +19,27 @@ model Agent {
   id              Int      @id @default(autoincrement())
   agentId         BigInt   @unique // On-chain tokenId
   chainId         Int
-  registryAddress String   @db.VarChar(42)
-  ownerAddress    String   @db.VarChar(42)
+  registryAddress String   
+  ownerAddress    String   
   
   // AgentURI metadata (hydrated off-chain)
-  agentURI        String?  @db.Text
+  agentURI        String?  
   name            String?
-  description     String?  @db.Text
-  image           String?  @db.Text
+  description     String?  
+  image           String?  
   
   // Status fields
   active          Boolean  @default(false)
   x402Support     Boolean  @default(false)
   isA2AVerified   Boolean  @default(false)
   complianceScore Int      @default(0)
-  supportedTrust  String[] @default([])
+  supportedTrust  String?
   
   // Integrity
-  agentHash       String?  @db.VarChar(66) // keccak256 of canonical JSON
+  agentHash       String?   // keccak256 of canonical JSON
   
   // On-chain metadata
-  agentWallet     String?  @db.VarChar(42)
+  agentWallet     String?  
   
   // Timestamps
   registeredAt    DateTime @default(now())
@@ -48,7 +48,7 @@ model Agent {
   
   // Indexing info
   registeredBlock BigInt
-  registeredTx    String   @db.VarChar(66)
+  registeredTx    String   
   
   // Relations
   endpoints       Endpoint[]
@@ -72,7 +72,7 @@ model AgentMetadata {
   id          Int    @id @default(autoincrement())
   agentId     BigInt
   metadataKey String
-  metadataValue Bytes
+  metadataValue String
   
   agent       Agent  @relation(fields: [agentId], references: [agentId], onDelete: Cascade)
   
@@ -92,7 +92,7 @@ model Endpoint {
   
   // Endpoint definition
   name        String   // "MCP", "A2A", "OASF", "web", "ENS", etc.
-  endpoint    String   @db.Text // URL or identifier
+  endpoint    String    // URL or identifier
   version     String?
   
   // Protocol-specific fields (JSON)
@@ -127,7 +127,7 @@ model EndpointScan {
   endpointId  Int?
   
   // Scan target
-  url         String   @db.Text
+  url         String   
   
   // TLS checks
   tlsValid    Boolean  @default(false)
@@ -153,7 +153,7 @@ model EndpointScan {
   trustScore  Int      @default(0) // 0-100
   
   // Error tracking
-  error       String?  @db.Text
+  error       String?  
   
   scannedAt   DateTime @default(now())
   
@@ -173,14 +173,14 @@ model Feedback {
   agentId        BigInt
   
   // On-chain data
-  clientAddress  String   @db.VarChar(42)
+  clientAddress  String   
   feedbackIndex  BigInt
   score          Int      // 0-100
   tag1           String?
   tag2           String?
-  targetEndpoint String?  @db.Text
-  feedbackURI    String?  @db.Text
-  feedbackHash   String?  @db.VarChar(66)
+  targetEndpoint String?  
+  feedbackURI    String?  
+  feedbackHash   String?  
   
   // Off-chain hydration
   feedbackContent Json?
@@ -194,7 +194,7 @@ model Feedback {
   
   // Indexing info
   createdBlock   BigInt
-  createdTx      String   @db.VarChar(66)
+  createdTx      String   
   createdAt      DateTime @default(now())
   
   agent          Agent    @relation(fields: [agentId], references: [agentId], onDelete: Cascade)
@@ -213,16 +213,16 @@ model FeedbackResponse {
   id            Int      @id @default(autoincrement())
   feedbackId    Int
   
-  responderAddress String @db.VarChar(42)
-  responseURI   String?  @db.Text
-  responseHash  String?  @db.VarChar(66)
+  responderAddress String 
+  responseURI   String?  
+  responseHash  String?  
   
   // Off-chain hydration
   responseContent Json?
   
   // Indexing info
   createdBlock  BigInt
-  createdTx     String   @db.VarChar(66)
+  createdTx     String   
   createdAt     DateTime @default(now())
   
   feedback      Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
@@ -239,17 +239,17 @@ model Validation {
   agentId          BigInt
   
   // Request
-  validatorAddress String   @db.VarChar(42)
-  requestURI       String?  @db.Text
-  requestHash      String   @db.VarChar(66) @unique
+  validatorAddress String   
+  requestURI       String?  
+  requestHash      String    @unique
   
   // Off-chain hydration
   requestContent   Json?
   
   // Latest response
   response         Int?     // 0-100
-  responseURI      String?  @db.Text
-  responseHash     String?  @db.VarChar(66)
+  responseURI      String?  
+  responseHash     String?  
   responseTag      String?
   responseContent  Json?
   
@@ -259,9 +259,9 @@ model Validation {
   
   // Indexing info
   requestedBlock   BigInt
-  requestedTx      String   @db.VarChar(66)
+  requestedTx      String   
   respondedBlock   BigInt?
-  respondedTx      String?  @db.VarChar(66)
+  respondedTx      String?  
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -288,7 +288,7 @@ model IndexerCursor {
   chainId      Int
   registry     String   // "identity" | "reputation" | "validation"
   lastBlock    BigInt
-  lastTx       String?  @db.VarChar(66)
+  lastTx       String?  
   
   updatedAt    DateTime @updatedAt
   
@@ -316,13 +316,13 @@ model SystemStats {
 model MetadataTask {
   id            Int           @id @default(autoincrement())
   agentId       BigInt
-  uri           String        @db.Text
+  uri           String        
   type          TaskType      @default(AGENT_METADATA)
   status        TaskStatus    @default(PENDING)
   
   // Retry logic
   attempts      Int           @default(0)
-  lastError     String?       @db.Text
+  lastError     String?       
   nextRunAt     DateTime      @default(now())
   
   createdAt     DateTime      @default(now())
@@ -354,7 +354,7 @@ model ScanJob {
   id            Int           @id @default(autoincrement())
   agentId       BigInt
   endpointId    Int?
-  url           String        @db.Text
+  url           String        
   status        TaskStatus    @default(PENDING)
   
   // Handshake details
@@ -363,7 +363,7 @@ model ScanJob {
   
   // Retry logic
   attempts      Int           @default(0)
-  lastError     String?       @db.Text
+  lastError     String?       
   nextRunAt     DateTime      @default(now())
   
   createdAt     DateTime      @default(now())

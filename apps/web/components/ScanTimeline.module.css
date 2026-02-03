@@ -1,0 +1,189 @@
+.timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 20px;
+}
+
+.scanItem {
+    display: flex;
+    gap: 20px;
+}
+
+.marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 20px;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    z-index: 2;
+    margin-top: 6px;
+}
+
+.line {
+    width: 2px;
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.content {
+    flex: 1;
+    padding-bottom: 24px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.score {
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+}
+
+.date {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+}
+
+.details {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badgeSuccess {
+    background: rgba(0, 255, 136, 0.1);
+    color: #00ff88;
+}
+
+.badgeError {
+    background: rgba(255, 68, 68, 0.1);
+    color: #ff4444;
+}
+
+.status {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    font-family: monospace;
+}
+
+.good {
+    background: #00ff88;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.warning {
+    background: #ffcc00;
+    box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+}
+
+.danger {
+    background: #ff4444;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+}
+
+.headerLeft {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.toggleIcon {
+    font-size: 10px;
+    color: var(--color-text-dim);
+    transition: transform 0.2s ease;
+}
+
+.expandedContent {
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border-left: 2px solid var(--color-primary);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.logGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.logItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fullRow {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logLabel {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    font-weight: 700;
+}
+
+.logValue {
+    font-size: 12px;
+    color: white;
+    font-family: var(--font-mono);
+}
+
+.errorValue {
+    color: #ff4444;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    line-height: 1.4;
+}
+
+.textSuccess {
+    color: #00ff88;
+}
+
+.textDim {
+    color: var(--color-text-dim);
+}
+
+.empty {
+    text-align: center;
+    padding: 40px 0;
+    color: var(--color-text-secondary);
+    font-style: italic;
+}

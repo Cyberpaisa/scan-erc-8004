@@ -38,6 +38,30 @@
     font-size: 28px;
 }
 
+.titleContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 32px;
+}
+
+.registerLink {
+    background: var(--color-primary);
+    color: black !important;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+}
+
+.registerLink:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(0, 243, 255, 0.5);
+}
+
 .logoText {
     background: var(--gradient-primary);
     -webkit-background-clip: text;
@@ -145,12 +169,31 @@
 
 .filters {
     display: flex;
-    gap: 12px;
+    gap: 8px;
 }
 
 .filterBtn {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
     padding: 8px 16px;
-    font-size: 13px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.filterBtn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.activeFilter {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white !important;
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
 }
 
 /* Agent Grid */
@@ -164,9 +207,16 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    animation: fadeIn 0.5s ease forwards;
-    opacity: 0;
     cursor: pointer;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    transition: all var(--transition-normal);
+    opacity: 1;
+    /* Ensure visibility */
+    animation: fadeIn 0.8s ease backwards;
+    /* Use backwards to ensure initial state is visible if animation delays */
 }
 
 .agentCard:hover {
@@ -300,28 +350,41 @@
     color: var(--color-text-muted);
 }
 
-.agentStats {
-    display: flex;
-    gap: 24px;
+.agentFooter {
+    margin-top: auto;
     padding-top: 16px;
     border-top: 1px solid var(--color-border);
-    margin-top: auto;
-}
-
-.agentStat {
     display: flex;
-    align-items: baseline;
-    gap: 6px;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.agentStatValue {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--color-text-primary);
+.reputationBadge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
 }
 
-.agentStatLabel {
-    font-size: 13px;
+.issueBubble {
+    background: #ef4444;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.issueIcon {
+    font-weight: 900;
+    font-size: 10px;
+}
+
+.validationCount {
     color: var(--color-text-muted);
 }
 
