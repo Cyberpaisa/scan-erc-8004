@@ -21,6 +21,7 @@ statsRoutes.get('/', async (_req: Request, res: Response) => {
             totalValidations,
             totalEndpoints,
             protocolStats,
+            x402Stats,
         ] = await Promise.all([
             db.agent.count(),
             db.agent.count({ where: { active: true } }),
@@ -34,7 +35,16 @@ statsRoutes.get('/', async (_req: Request, res: Response) => {
                 orderBy: { _count: { name: 'desc' } },
                 take: 10,
             }),
+            db.agent.aggregate({
+                _sum: {
+                    totalVolume: true,
+                    txCount: true,
+                }
+            })
         ]);
+
+        const totalNetworkVolume = (x402Stats as any)._sum.totalVolume || BigInt(0);
+        const totalNetworkTxs = (x402Stats as any)._sum.txCount || 0;
 
         res.json({
             agents: {
@@ -55,6 +65,10 @@ statsRoutes.get('/', async (_req: Request, res: Response) => {
                     count: p._count.name,
                 })),
             },
+            network: {
+                totalVolume: totalNetworkVolume.toString(),
+                totalTransactions: totalNetworkTxs,
+            }
         });
         return;
     } catch (error) {

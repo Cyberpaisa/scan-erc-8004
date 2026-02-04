@@ -32,9 +32,25 @@ scan-erc-8004/
 ## Prerequisites
 
 - Node.js 20 or higher
-- Docker and Docker Compose
-- PostgreSQL 16 (via Docker)
+- SQLite 3 (Default, bundled with Prisma)
+- Docker and Docker Compose (Optional, for PostgreSQL)
 - Avalanche Fuji testnet AVAX for deployment
+
+## Database & Infrastructure Modes
+
+This repository supports two operating modes. By default, it is configured for **Agility Mode (SQLite)**.
+
+### 1. Agility Mode (SQLite) - Default
+Used for rapid development and testing without external dependencies.
+- **Provider**: `sqlite`
+- **Setup**: No Docker required.
+- **DATABASE_URL**: `file:./packages/db/prisma/dev.db`
+
+### 2. Production/Robust Mode (PostgreSQL)
+Used for production-grade environments or handling large datasets.
+- **Provider**: `postgresql`
+- **Setup**: Requires Docker.
+- **DATABASE_URL**: `postgresql://scanner:scanner_secret@localhost:5432/agent_scanner`
 
 ## Quick Start
 
@@ -71,11 +87,20 @@ VALIDATION_REGISTRY_ADDRESS=0x4153216221d4Dd4C3E423c6bc349965584bB4C87
 DEPLOYER_PRIVATE_KEY=0x...
 ```
 
-### 3. Start Database
+### 3. Initialize Database (SQLite)
+
+The project is currently optimized for SQLite. Simply run:
 
 ```bash
-npm run docker:up
+cd packages/db
+npx prisma generate
+npx prisma db push
+npx prisma db seed
+cd ../..
 ```
+
+> [!NOTE]
+> If you prefer PostgreSQL, see the "Migrating to Docker/Postgres" section below.
 
 ### 4. Initialize Database Schema
 
@@ -254,6 +279,39 @@ This implementation follows:
 - [8004.org](https://8004.org) - Official ERC-8004 community
 - [Avalanche Documentation](https://docs.avax.network/)
 
+## Migrating to Docker / PostgreSQL
+
+To switch from SQLite back to a robust Docker-based PostgreSQL setup, follow these steps:
+
+1. **Start Docker**: Ensure Docker Desktop is running.
+2. **Launch Postgres**:
+   ```bash
+   npm run docker:up
+   ```
+3. **Update .env**:
+   Modify `DATABASE_URL` in root and apps (`api`, `worker`):
+   ```env
+   DATABASE_URL="postgresql://scanner:scanner_secret@localhost:5432/agent_scanner"
+   ```
+4. **Update Prisma Schema**:
+   In `packages/db/prisma/schema.prisma`, change the provider:
+   ```prisma
+   datasource db {
+     provider = "postgresql"
+     url      = env("DATABASE_URL")
+   }
+   ```
+5. **Sync Database**:
+   ```bash
+   cd packages/db
+   npx prisma generate
+   npx prisma db push
+   ```
+
+## Repository
+
+https://github.com/Cyberpaisa/scan-erc-8004
+
 ## License
 
 MIT
@@ -261,7 +319,3 @@ MIT
 ## Contributing
 
 Contributions are welcome. Please open an issue or submit a pull request.
-
-## Repository
-
-https://github.com/Cyberpaisa/scan-erc-8004

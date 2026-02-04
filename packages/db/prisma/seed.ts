@@ -6,14 +6,22 @@ async function main() {
     console.log('🌱 Seeding Shadow-Galaxy (Local Mode)...');
 
     // Create a high-trust agent
-    const agent1 = await (prisma.agent as any).upsert({
+    const agent1 = await prisma.agent.upsert({
         where: { agentId: BigInt(1) },
-        update: {},
+        update: {
+            agentWallet: '0x1234567890123456789012345678901234567890',
+            totalVolume: BigInt("5000000000000000000"), // 5 AVAX
+            txCount: 12,
+            active: true,
+            isA2AVerified: true,
+            complianceScore: 98,
+        },
         create: {
             agentId: BigInt(1),
             chainId: 43113,
             registryAddress: '0x2f7134e0e0eb7062D99De95d13593735B8634647',
             ownerAddress: '0x1234567890123456789012345678901234567890',
+            agentWallet: '0x1234567890123456789012345678901234567890',
             name: 'Sentinel Prime Agent',
             description: 'The first AI agent certified by Shadow-Galaxy Chamber of Commerce. Specialized in high-trust remesas and A2A transactions.',
             image: 'https://img.freepik.com/premium-photo/futuristic-robot-head-neon-colors-black-background_935619-2780.jpg',
@@ -21,20 +29,28 @@ async function main() {
             isA2AVerified: true,
             complianceScore: 98,
             x402Support: true,
+            totalVolume: BigInt("5000000000000000000"),
+            txCount: 12,
             registeredBlock: BigInt(1000),
             registeredTx: '0xabc123...',
-        } as any,
+        },
     });
 
     // Create a medium-trust agent
-    const agent2 = await (prisma.agent as any).upsert({
+    const agent2 = await prisma.agent.upsert({
         where: { agentId: BigInt(2) },
-        update: {},
+        update: {
+            agentWallet: '0x8888888888888888888888888888888888888888',
+            totalVolume: BigInt("2000000000000000000"), // 2 AVAX
+            txCount: 5,
+            active: true,
+        },
         create: {
             agentId: BigInt(2),
             chainId: 43113,
             registryAddress: '0x2f7134e0e0eb7062D99De95d13593735B8634647',
             ownerAddress: '0x0987654321098765432109876543210987654321',
+            agentWallet: '0x8888888888888888888888888888888888888888',
             name: 'Alpha Trader Bot',
             description: 'Automated DeFi trading agent. Fast but currently undergoing security re-verification.',
             image: 'https://img.freepik.com/premium-vector/abstract-technology-robotic-humanoid-head-background_103342-99.jpg',
@@ -42,9 +58,11 @@ async function main() {
             isA2AVerified: false,
             complianceScore: 65,
             x402Support: true,
+            totalVolume: BigInt("2000000000000000000"),
+            txCount: 5,
             registeredBlock: BigInt(1005),
             registeredTx: '0xdef456...',
-        } as any,
+        },
     });
 
     // Associate endpoints

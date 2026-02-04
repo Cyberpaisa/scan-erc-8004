@@ -185,6 +185,9 @@ agentRoutes.get('/:id', async (req: Request, res: Response) => {
                 value: m.metadataValue.toString('hex'),
             })),
             recentScans: agent.scans,
+            totalVolume: agent.totalVolume.toString(),
+            txCount: agent.txCount,
+            lastPaymentAt: agent.lastPaymentAt,
             registeredAt: agent.registeredAt,
             registeredBlock: agent.registeredBlock.toString(),
             registeredTx: agent.registeredTx,
@@ -453,6 +456,47 @@ agentRoutes.post('/:id/validate', async (req: Request, res: Response) => {
     } catch (error: any) {
         console.error('Error triggering validation:', error);
         res.status(500).json({ error: 'Failed to trigger validation' });
+        return;
+    }
+});
+// ==============================================
+// PAY AGENT (X402 Simulation)
+// ==============================================
+agentRoutes.post('/:id/pay', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { amount = '1000000000000000000' } = req.body; // Default 1 AVAX
+
+        const numericId = parseInt(id as string, 10);
+        const agent = await db.agent.findFirst({
+            where: {
+                OR: [{ id: numericId }, { agentId: BigInt(numericId) }],
+            },
+        });
+
+        if (!agent) {
+            res.status(404).json({ error: 'Agent not found' });
+            return;
+        }
+
+        const updatedAgent = await db.agent.update({
+            where: { agentId: agent.agentId },
+            data: {
+                totalVolume: { increment: BigInt(amount) },
+                txCount: { increment: 1 },
+                lastPaymentAt: new Date(),
+            },
+        });
+
+        res.json({
+            message: 'Payment Successful (X402)',
+            totalVolume: updatedAgent.totalVolume.toString(),
+            txCount: updatedAgent.txCount,
+        });
+        return;
+    } catch (error) {
+        console.error('Error processing payment:', error);
+        res.status(500).json({ error: 'Failed to process payment' });
         return;
     }
 });

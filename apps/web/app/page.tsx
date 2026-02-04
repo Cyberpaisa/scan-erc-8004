@@ -39,6 +39,10 @@ interface Stats {
         total: number;
         byProtocol: Array<{ protocol: string; count: number }>;
     };
+    network?: {
+        totalVolume: string;
+        totalTransactions: number;
+    }
 }
 
 export default function HomePage() {
@@ -138,20 +142,52 @@ export default function HomePage() {
 
             <main className={styles.main}>
                 <div className="container">
+                    {/* Global Network Pulse */}
+                    {stats?.network && (
+                        <section className={styles.networkPulse}>
+                            <div className={styles.pulseHeader}>
+                                <div className={styles.pulseIcon}>⚡</div>
+                                <h2>Network Pulse</h2>
+                                <span className={styles.liveBadge}>LIVE</span>
+                            </div>
+                            <div className={styles.pulseGrid}>
+                                <div className={styles.pulseStat}>
+                                    <div className={styles.pulseLabel}>Total Network Volume</div>
+                                    <div className={styles.pulseValue}>
+                                        {(Number(stats.network.totalVolume) / 1e18).toFixed(2)} <span>AVAX</span>
+                                    </div>
+                                </div>
+                                <div className={styles.pulseStat}>
+                                    <div className={styles.pulseLabel}>Global Transactions</div>
+                                    <div className={styles.pulseValue}>
+                                        {stats.network.totalTransactions} <span>txs</span>
+                                    </div>
+                                </div>
+                                <div className={styles.pulseStat}>
+                                    <div className={styles.pulseLabel}>Avg. Trust Level</div>
+                                    <div className={styles.pulseValue}>
+                                        {agents.length > 0 ? (agents.reduce((acc, a) => acc + a.complianceScore, 0) / agents.length).toFixed(0) : 0}%
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    )}
+
                     <div className={styles.searchBar}>
                         <input
                             type="text"
-                            placeholder="Search agents..."
+                            placeholder="Search agents by name or ID..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className={styles.searchInput}
                         />
                         <span className={styles.searchIcon}>🔍</span>
                     </div>
+
                     {/* Ranking Section */}
                     <section className={styles.rankingSection} id="ranking">
                         <h2 className={styles.rankingTitle}>
-                            <span className={styles.rankingEmoji}>🏆</span> Top Agents by Volume
+                            <span className={styles.rankingEmoji}>🏆</span> Agent Power Ranking
                         </h2>
                         <div className={styles.rankingGrid}>
                             {agents
@@ -159,20 +195,20 @@ export default function HomePage() {
                                 .sort((a, b) => Number(b.totalVolume || 0) - Number(a.totalVolume || 0))
                                 .slice(0, 4)
                                 .map((agent, index) => (
-                                    <div key={agent.id} className={styles.rankingItem}>
+                                    <Link key={agent.id} href={`/agent/${agent.agentId}`} className={styles.rankingItem}>
                                         <div className={styles.rankNumber}>#{index + 1}</div>
                                         <div className={styles.rankInfo}>
                                             <div className={styles.rankName}>{agent.name || `Agent #${agent.agentId}`}</div>
                                             <div className={styles.rankVolume}>
-                                                {(Number(agent.totalVolume) / 1e18).toFixed(2)} AVAX
+                                                {(Number(agent.totalVolume) / 1e18).toFixed(2)} <span>AVAX</span>
                                             </div>
-                                            <div className={styles.statLabel}>{agent.txCount} txs</div>
+                                            <div className={styles.rankSub}>Active in {agent.endpoints.length} protocols</div>
                                         </div>
-                                    </div>
+                                    </Link>
                                 ))}
                             {agents.filter(a => Number(a.totalVolume || 0) > 0).length === 0 && (
                                 <div className={styles.emptyState} style={{ gridColumn: '1 / -1', padding: '20px' }}>
-                                    <p>Waiting for transaction data...</p>
+                                    <p>Gathering network analytics...</p>
                                 </div>
                             )}
                         </div>

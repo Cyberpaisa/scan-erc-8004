@@ -436,6 +436,236 @@
     margin-top: 8px;
 }
 
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+
+    100% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+}
+
+.networkPulse {
+    background: linear-gradient(135deg, rgba(20, 20, 30, 0.8), rgba(10, 10, 15, 0.9));
+    border: 1px solid rgba(0, 243, 255, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 48px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.networkPulse::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.5), transparent);
+}
+
+.pulseHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.pulseIcon {
+    font-size: 24px;
+    color: var(--color-accent);
+    animation: pulse 2s infinite ease-in-out;
+}
+
+.pulseHeader h2 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.liveBadge {
+    font-size: 10px;
+    background: #ef4444;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.pulseGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 32px;
+}
+
+.pulseStat {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pulseLabel {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pulseValue {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.pulseValue span {
+    font-size: 16px;
+    color: var(--color-accent);
+    margin-left: 4px;
+}
+
+.searchBar {
+    position: relative;
+    margin-bottom: 40px;
+    max-width: 600px;
+}
+
+.searchInput {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 14px 20px 14px 48px;
+    color: var(--color-text-primary);
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.searchInput:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+}
+
+.searchIcon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    opacity: 0.5;
+}
+
+/* Ranking Section */
+.rankingSection {
+    margin-bottom: 64px;
+}
+
+.rankingTitle {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.rankingGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.rankingItem {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+    text-decoration: none !important;
+    color: inherit !important;
+}
+
+.rankingItem:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: var(--color-accent);
+    transform: translateX(5px);
+}
+
+.rankNumber {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--color-accent);
+    opacity: 0.5;
+    font-style: italic;
+    width: 40px;
+}
+
+.rankInfo {
+    flex: 1;
+}
+
+.rankName {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.rankVolume {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.rankVolume span {
+    font-size: 12px;
+    color: var(--color-secondary);
+    margin-left: 2px;
+}
+
+.rankSub {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin-top: 4px;
+}
+
+.volumeTag {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    background: rgba(255, 215, 0, 0.1);
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 4px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .headerContent {
@@ -457,5 +687,10 @@
 
     .agentGrid {
         grid-template-columns: 1fr;
+    }
+
+    .pulseGrid {
+        grid-template-columns: 1fr;
+        gap: 20px;
     }
 }

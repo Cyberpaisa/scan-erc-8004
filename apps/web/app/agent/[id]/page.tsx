@@ -60,6 +60,9 @@ interface AgentDetails {
     endpoints: Endpoint[];
     metadata: MetadataItem[];
     recentScans: Scan[];
+    totalVolume: string;
+    txCount: number;
+    lastPaymentAt: string | null;
     registeredAt: string;
     registeredBlock: string;
     registeredTx: string;
@@ -145,6 +148,30 @@ export default function AgentPage({ params }: { params: Promise<{ id: string }> 
             abortController.abort();
         };
     }, [id, showToast]);
+
+    // =============================================
+    // PAGO X402 (Simulación)
+    // =============================================
+    const handlePay = useCallback(async () => {
+        if (!agent) return;
+
+        try {
+            await api.fetch(`/api/v1/agents/${agent.id}/pay`, {
+                method: 'POST',
+                body: JSON.stringify({ amount: '1000000000000000000' }) // 1 AVAX
+            });
+
+            showToast('🚀 X402 Payment successful! 1 AVAX sent.', 'success');
+
+            // Refresh agent data
+            const updatedAgent = await api.getAgent(id);
+            setAgent(updatedAgent);
+        } catch (err: any) {
+            console.error('Payment failed:', err);
+            showToast('Payment failed. Check your wallet connectivity.', 'error');
+        }
+    }, [agent, id, showToast]);
+
 
     // =============================================
     // VALIDACIÓN CON POLLING MEJORADO
@@ -303,6 +330,17 @@ export default function AgentPage({ params }: { params: Promise<{ id: string }> 
                                             </>
                                         ) : 'Validate now'}
                                     </button>
+
+                                    {agent.x402Support && (
+                                        <button
+                                            className={`btn ${styles.payBtn}`}
+                                            onClick={handlePay}
+                                            aria-label="Pay with X402"
+                                        >
+                                            <span className={styles.payIcon}>💳</span>
+                                            Pay with X402
+                                        </button>
+                                    )}
                                 </div>
 
                                 <p className={styles.profileId}>
@@ -347,90 +385,99 @@ export default function AgentPage({ params }: { params: Promise<{ id: string }> 
                         )}
                     </div>
 
-                    {/* Trust Metrics Breakdown */}
-                    <section className={`card ${styles.section}`} aria-labelledby="metrics-heading">
-                        <h2 id="metrics-heading" className={styles.sectionTitle}>
-                            Trust Metrics Breakdown
-                        </h2>
-                        <div className={styles.metricsGrid}>
-                            {/* Health Metric */}
-                            <div className={styles.metricCard}>
-                                <div className={styles.metricHeader}>
-                                    <span className={styles.metricLabel}>Health</span>
-                                    <span className={styles.metricValue}>
-                                        {agent.endpoints.every(e => e.tlsValid && e.dnsValid) ? '100%' : '80%'}
-                                    </span>
+                    {/* Trust Metrics & Financial Analytics */}
+                    <div className={styles.metricsContainer}>
+                        <section className={`card ${styles.section} ${styles.trustMetrics}`} aria-labelledby="metrics-heading">
+                            <h2 id="metrics-heading" className={styles.sectionTitle}>
+                                Trust Metrics Breakdown
+                            </h2>
+                            <div className={styles.metricsGrid}>
+                                {/* Health Metric */}
+                                <div className={styles.metricCard}>
+                                    <div className={styles.metricHeader}>
+                                        <span className={styles.metricLabel}>Health</span>
+                                        <span className={styles.metricValue}>
+                                            {agent.endpoints.every(e => e.tlsValid && e.dnsValid) ? '100%' : '80%'}
+                                        </span>
+                                    </div>
+                                    <div className={styles.metricBarContainer}>
+                                        <div
+                                            className={styles.metricBar}
+                                            style={{ width: agent.endpoints.every(e => e.tlsValid && e.dnsValid) ? '100%' : '80%' }}
+                                        ></div>
+                                    </div>
+                                    <p className={styles.metricDesc}>TLS, DNS and Server uptime status.</p>
                                 </div>
-                                <div className={styles.metricBarContainer}>
-                                    <div
-                                        className={styles.metricBar}
-                                        style={{ width: agent.endpoints.every(e => e.tlsValid && e.dnsValid) ? '100%' : '80%' }}
-                                    ></div>
-                                </div>
-                                <p className={styles.metricDesc}>TLS, DNS and Server uptime status.</p>
-                            </div>
 
-                            {/* Reputation Metric */}
-                            <div className={styles.metricCard}>
-                                <div className={styles.metricHeader}>
-                                    <span className={styles.metricLabel}>Reputation</span>
-                                    <span className={styles.metricValue}>
-                                        {feedbackSummary.averageScore.toFixed(0)}%
-                                    </span>
+                                {/* Reputation Metric */}
+                                <div className={styles.metricCard}>
+                                    <div className={styles.metricHeader}>
+                                        <span className={styles.metricLabel}>Reputation</span>
+                                        <span className={styles.metricValue}>
+                                            {feedbackSummary.averageScore.toFixed(0)}%
+                                        </span>
+                                    </div>
+                                    <div className={styles.metricBarContainer}>
+                                        <div
+                                            className={styles.metricBar}
+                                            style={{
+                                                width: `${feedbackSummary.averageScore}%`,
+                                                background: 'var(--color-secondary)'
+                                            }}
+                                        ></div>
+                                    </div>
+                                    <p className={styles.metricDesc}>Calculated from {feedbackSummary.totalFeedback} on-chain reviews.</p>
                                 </div>
-                                <div className={styles.metricBarContainer}>
-                                    <div
-                                        className={styles.metricBar}
-                                        style={{
-                                            width: `${feedbackSummary.averageScore}%`,
-                                            background: 'var(--color-secondary)'
-                                        }}
-                                    ></div>
-                                </div>
-                                <p className={styles.metricDesc}>Calculated from {feedbackSummary.totalFeedback} on-chain reviews.</p>
-                            </div>
 
-                            {/* Compliance Metric */}
-                            <div className={styles.metricCard}>
-                                <div className={styles.metricHeader}>
-                                    <span className={styles.metricLabel}>Compliance</span>
-                                    <span className={styles.metricValue}>
-                                        {agent.active && agent.agentHash ? '100%' : '50%'}
-                                    </span>
+                                {/* Compliance Metric */}
+                                <div className={styles.metricCard}>
+                                    <div className={styles.metricHeader}>
+                                        <span className={styles.metricLabel}>Compliance</span>
+                                        <span className={styles.metricValue}>
+                                            {agent.active && agent.agentHash ? '100%' : '50%'}
+                                        </span>
+                                    </div>
+                                    <div className={styles.metricBarContainer}>
+                                        <div
+                                            className={styles.metricBar}
+                                            style={{
+                                                width: agent.active && agent.agentHash ? '100%' : '50%',
+                                                background: 'var(--color-accent)'
+                                            }}
+                                        ></div>
+                                    </div>
+                                    <p className={styles.metricDesc}>Registry status and metadata integrity.</p>
                                 </div>
-                                <div className={styles.metricBarContainer}>
-                                    <div
-                                        className={styles.metricBar}
-                                        style={{
-                                            width: agent.active && agent.agentHash ? '100%' : '50%',
-                                            background: 'var(--color-accent)'
-                                        }}
-                                    ></div>
-                                </div>
-                                <p className={styles.metricDesc}>Registry status and metadata integrity.</p>
                             </div>
+                        </section>
 
-                            {/* Economy Metric */}
-                            <div className={styles.metricCard}>
-                                <div className={styles.metricHeader}>
-                                    <span className={styles.metricLabel}>Economy</span>
-                                    <span className={styles.metricValue}>
-                                        {agent.x402Support ? '100%' : '0%'}
+                        <section className={`card ${styles.section} ${styles.financialAnalytics}`} aria-labelledby="finance-heading">
+                            <h2 id="finance-heading" className={styles.sectionTitle}>
+                                <span className={styles.accentText}>X402</span> Financial Analytics
+                            </h2>
+                            <div className={styles.financeGrid}>
+                                <div className={styles.financeStat}>
+                                    <span className={styles.financeLabel}>Total Volume</span>
+                                    <span className={styles.financeValue}>
+                                        {(Number(agent.totalVolume || 0) / 1e18).toFixed(2)} AVAX
                                     </span>
+                                    <p className={styles.financeSub}>≈ ${(Number(agent.totalVolume || 0) / 1e18 * 35).toFixed(2)} USD</p>
                                 </div>
-                                <div className={styles.metricBarContainer}>
-                                    <div
-                                        className={styles.metricBar}
-                                        style={{
-                                            width: agent.x402Support ? '100%' : '0%',
-                                            background: '#ff00cc'
-                                        }}
-                                    ></div>
+                                <div className={styles.financeStat}>
+                                    <span className={styles.financeLabel}>Transfers (txs)</span>
+                                    <span className={styles.financeValue}>{agent.txCount || 0}</span>
+                                    <p className={styles.financeSub}>Settled via X402</p>
                                 </div>
-                                <p className={styles.metricDesc}>x402 Payment support and agent wallet setup.</p>
+                                <div className={styles.financeStat}>
+                                    <span className={styles.financeLabel}>Last Payment</span>
+                                    <span className={styles.financeValue}>
+                                        {agent.lastPaymentAt ? new Date(agent.lastPaymentAt).toLocaleDateString() : 'None'}
+                                    </span>
+                                    <p className={styles.financeSub}>{agent.lastPaymentAt ? 'Successfully confirmed' : 'Awaiting first tx'}</p>
+                                </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
+                    </div>
 
                     {/* Feedback Section */}
                     <section className={`card ${styles.section}`} aria-labelledby="feedback-heading">

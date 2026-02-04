@@ -6,7 +6,6 @@
  */
 
 import hre from "hardhat";
-import { parseLog } from "viem";
 
 interface TestAgent {
     name: string;
@@ -151,6 +150,7 @@ async function main() {
 
     console.log("\nStarting registration...");
 
+
     for (let i = 0; i < TEST_AGENTS.length; i++) {
         const agent = TEST_AGENTS[i];
         if (!agent) continue;
@@ -158,8 +158,9 @@ async function main() {
         console.log(`[${i + 1}/${TEST_AGENTS.length}] Registering: ${agent.name}`);
 
         try {
+            // @ts-ignore - registry.write may be complex to infer in hardhat-viem
             const hash = await registry.write.register([agent.agentURI]);
-            const receipt = await publicClient.waitForTransactionReceipt({ hash });
+            await publicClient.waitForTransactionReceipt({ hash });
 
             console.log(`    Status: Success`);
             console.log(`    TX: ${hash}`);

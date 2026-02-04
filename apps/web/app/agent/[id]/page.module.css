@@ -295,6 +295,98 @@
     cursor: wait;
 }
 
+.payBtn {
+    background: linear-gradient(135deg, #ff00cc, #3333ff);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 4px;
+    box-shadow: 0 0 15px rgba(255, 0, 204, 0.4);
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.payBtn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 0 25px rgba(255, 0, 204, 0.7);
+    filter: brightness(1.1);
+}
+
+.payIcon {
+    font-size: 14px;
+}
+
+/* Financial Analytics */
+.metricsContainer {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.financialAnalytics {
+    background: linear-gradient(135deg, rgba(255, 0, 204, 0.05), rgba(51, 51, 255, 0.05));
+    border: 1px solid rgba(255, 0, 204, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.financialAnalytics::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 0, 204, 0.1) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.accentText {
+    color: #ff00cc;
+    text-shadow: 0 0 8px rgba(255, 0, 204, 0.5);
+}
+
+.financeGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.financeStat {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    border-left: 3px solid #ff00cc;
+}
+
+.financeLabel {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.financeValue {
+    display: block;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    font-family: var(--font-mono);
+}
+
+.financeSub {
+    font-size: 11px;
+    color: var(--color-text-dim);
+    margin-top: 4px;
+}
+
 /* Scan List */
 .scanList {
     display: flex;
