@@ -26,8 +26,21 @@ app.use(cors());
 app.use(express.json());
 
 // Health check
-app.get('/health', (_req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/health', async (_req, res) => {
+    try {
+        await db.$queryRaw`SELECT 1`;
+        res.json({
+            status: 'ok',
+            database: 'connected',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(503).json({
+            status: 'error',
+            database: 'disconnected',
+            timestamp: new Date().toISOString()
+        });
+    }
 });
 
 // API Routes

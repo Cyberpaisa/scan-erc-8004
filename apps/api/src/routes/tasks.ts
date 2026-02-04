@@ -45,7 +45,7 @@ taskRoutes.get('/', async (req: Request, res: Response) => {
         ]);
 
         res.json({
-            data: tasks.map(t => ({
+            data: tasks.map((t: any) => ({
                 ...t,
                 agentId: t.agentId.toString(),
                 agent: t.agent ? {
@@ -70,34 +70,88 @@ taskRoutes.get('/', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/v1/tasks/scans
+ * List Sentinel compliance scan jobs
+ */
+taskRoutes.get('/scans', async (req: Request, res: Response) => {
+    try {
+        const { status, limit = '50', page = '1' } = req.query;
+        const pageNum = parseInt(page as string, 10) || 1;
+        const limitNum = parseInt(limit as string, 10) || 50;
+        const skip = (pageNum - 1) * limitNum;
+
+        const where: any = {};
+        if (status) where.status = status;
+
+        const [scans, total] = await Promise.all([
+            db.scanJob.findMany({
+                where,
+                include: {
+                    endpoint: {
+                        select: { name: true }
+                    }
+                },
+                orderBy: { updatedAt: 'desc' },
+                skip,
+                take: limitNum,
+            }),
+            db.scanJob.count({ where }),
+        ]);
+
+        res.json({
+            data: scans.map((s: any) => ({
+                ...s,
+                agentId: s.agentId.toString(),
+            })),
+            pagination: {
+                total,
+                page: pageNum,
+                limit: limitNum,
+                totalPages: Math.ceil(total / limitNum),
+            }
+        });
+        return;
+    } catch (error) {
+        console.error('Error fetching scans:', error);
+        res.status(500).json({ error: 'Internal server error' });
+        return;
+    }
+});
+
+/**
  * GET /api/v1/tasks/stats
- * Get task processing statistics
+ * Get unified task processing statistics
  */
 taskRoutes.get('/stats', async (_req: Request, res: Response) => {
     try {
-        const stats = await db.metadataTask.groupBy({
-            by: ['status'],
-            _count: { status: true },
-        });
+        const [metadataStats, scanStats] = await Promise.all([
+            db.metadataTask.groupBy({
+                by: ['status'],
+                _count: { status: true },
+            }),
+            db.scanJob.groupBy({
+                by: ['status'],
+                _count: { status: true },
+            })
+        ]);
 
-        const formattedStats = {
-            total: 0,
-            pending: 0,
-            processing: 0,
-            completed: 0,
-            failed: 0,
+        const format = (stats: any[]) => {
+            const formatted = { total: 0, pending: 0, processing: 0, completed: 0, failed: 0 };
+            stats.forEach((s: any) => {
+                const count = s._count.status;
+                formatted.total += count;
+                if (s.status === 'PENDING') formatted.pending = count;
+                if (s.status === 'PROCESSING') formatted.processing = count;
+                if (s.status === 'COMPLETED' || s.status === 'SUCCESS') formatted.completed = count;
+                if (s.status === 'FAILED') formatted.failed = count;
+            });
+            return formatted;
         };
 
-        stats.forEach((s: any) => {
-            const count = s._count.status;
-            formattedStats.total += count;
-            if (s.status === 'PENDING') formattedStats.pending = count;
-            if (s.status === 'PROCESSING') formattedStats.processing = count;
-            if (s.status === 'COMPLETED') formattedStats.completed = count;
-            if (s.status === 'FAILED') formattedStats.failed = count;
+        res.json({
+            metadata: format(metadataStats),
+            scans: format(scanStats)
         });
-
-        res.json(formattedStats);
         return;
     } catch (error) {
         console.error('Error fetching task stats:', error);

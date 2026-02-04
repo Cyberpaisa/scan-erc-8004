@@ -29,24 +29,29 @@ export default function TasksDashboard() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<string>('');
+    const [tab, setTab] = useState<'metadata' | 'scans'>('metadata');
+    const [error, setError] = useState<string | null>(null);
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
     const fetchData = async () => {
         setLoading(true);
         try {
+            const endpoint = tab === 'metadata' ? 'tasks' : 'tasks/scans';
             const [tasksRes, statsRes] = await Promise.all([
-                fetch(`${API_URL}/api/v1/tasks?status=${filter}`),
+                fetch(`${API_URL}/api/v1/${endpoint}?status=${filter}`),
                 fetch(`${API_URL}/api/v1/tasks/stats`),
             ]);
 
             const tasksData = (await tasksRes.json()) as { data: Task[] };
-            const statsData = (await statsRes.json()) as Stats;
+            const statsData = (await statsRes.json()) as any;
 
             setTasks(tasksData.data || []);
             setStats(statsData);
+            setError(null);
         } catch (error) {
             console.error('Failed to fetch dashboard data:', error);
+            setError('System synchronization error. Please check API connectivity.');
         } finally {
             setLoading(false);
         }
@@ -56,7 +61,7 @@ export default function TasksDashboard() {
         fetchData();
         const interval = setInterval(fetchData, 10000); // 10s auto-refresh
         return () => clearInterval(interval);
-    }, [filter]);
+    }, [filter, tab]);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -85,36 +90,82 @@ export default function TasksDashboard() {
 
                 {/* Stats Grid */}
                 {stats && (
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-                        {[
-                            { label: 'Total Tasks', value: stats.total, color: 'text-white' },
-                            { label: 'Completed', value: stats.completed, color: 'text-emerald-400' },
-                            { label: 'Failed', value: stats.failed, color: 'text-rose-400' },
-                            { label: 'Pending', value: stats.pending, color: 'text-amber-400' },
-                            { label: 'Processing', value: stats.processing, color: 'text-cyan-400' },
-                        ].map((s, i) => (
-                            <div key={i} className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 backdrop-blur-sm">
-                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{s.label}</p>
-                                <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                        {/* Metadata Stats */}
+                        <div className="space-y-4">
+                            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-2">Hydration Tasks</h2>
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                {[
+                                    { label: 'Total', value: (stats as any).metadata.total, color: 'text-white' },
+                                    { label: 'Completed', value: (stats as any).metadata.completed, color: 'text-emerald-400' },
+                                    { label: 'Failed', value: (stats as any).metadata.failed, color: 'text-rose-400' },
+                                    { label: 'Active', value: (stats as any).metadata.pending + (stats as any).metadata.processing, color: 'text-cyan-400' },
+                                ].map((s, i) => (
+                                    <div key={i} className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 backdrop-blur-sm">
+                                        <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1">{s.label}</p>
+                                        <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                        </div>
+
+                        {/* Scan Stats */}
+                        <div className="space-y-4">
+                            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-2">Compliance Scans</h2>
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                {[
+                                    { label: 'Total', value: (stats as any).scans.total, color: 'text-white' },
+                                    { label: 'Completed', value: (stats as any).scans.completed, color: 'text-emerald-400' },
+                                    { label: 'Failed', value: (stats as any).scans.failed, color: 'text-rose-400' },
+                                    { label: 'Active', value: (stats as any).scans.pending + (stats as any).scans.processing, color: 'text-cyan-400' },
+                                ].map((s, i) => (
+                                    <div key={i} className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 backdrop-blur-sm shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                                        <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1">{s.label}</p>
+                                        <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 )}
 
-                {/* Filters */}
-                <div className="flex gap-2 mb-6">
-                    {['', 'PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'].map((s) => (
+                {/* Tabs & Filters */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <div className="flex bg-slate-900/80 p-1 rounded-xl border border-slate-800">
                         <button
-                            key={s}
-                            onClick={() => setFilter(s)}
-                            className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${filter === s
-                                ? 'bg-cyan-500 border-cyan-400 text-white shadow-[0_0_15px_rgba(34,211,238,0.4)]'
-                                : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
+                            onClick={() => { setTab('metadata'); setFilter(''); }}
+                            className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${tab === 'metadata'
+                                ? 'bg-slate-800 text-white shadow-lg'
+                                : 'text-slate-500 hover:text-slate-300'
                                 }`}
                         >
-                            {s || 'ALL'}
+                            Hydration Tasks
                         </button>
-                    ))}
+                        <button
+                            onClick={() => { setTab('scans'); setFilter(''); }}
+                            className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${tab === 'scans'
+                                ? 'bg-slate-800 text-white shadow-lg'
+                                : 'text-slate-500 hover:text-slate-300'
+                                }`}
+                        >
+                            Compliance Scans
+                        </button>
+                    </div>
+
+                    <div className="flex gap-2">
+                        {['', 'PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'].map((s) => (
+                            <button
+                                key={s}
+                                onClick={() => setFilter(s)}
+                                className={`px-4 py-1.5 rounded-full text-[10px] font-bold border transition-all ${filter === s
+                                    ? 'bg-cyan-500 border-cyan-400 text-white'
+                                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
+                                    }`}
+                            >
+                                {s || 'ALL'}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Table */}
@@ -131,7 +182,18 @@ export default function TasksDashboard() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-800/50">
-                                {loading && tasks.length === 0 ? (
+                                {error ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-20 text-center text-rose-400 font-medium bg-rose-500/5">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                                {error}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : loading && tasks.length === 0 ? (
                                     <tr>
                                         <td colSpan={5} className="px-6 py-20 text-center text-slate-500 italic">
                                             Scanning for active tasks...

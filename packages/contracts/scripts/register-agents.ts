@@ -5,7 +5,8 @@
  * Run after deploying contracts: npx hardhat run scripts/register-agents.ts --network fuji
  */
 
-import { ethers } from "hardhat";
+import hre from "hardhat";
+import { parseLog } from "viem";
 
 interface TestAgent {
     name: string;
@@ -122,34 +123,34 @@ const TEST_AGENTS: TestAgent[] = [
 ];
 
 async function main() {
-    const [deployer] = await ethers.getSigners();
-    if (!deployer) throw new Error("No deployer account found");
+    const publicClient = await hre.viem.getPublicClient();
+    const [walletClient] = await hre.viem.getWalletClients();
+
+    if (!walletClient) throw new Error("No wallet account found");
 
     console.log("=".repeat(60));
     console.log("Registering Test Agents");
     console.log("=".repeat(60));
-    console.log("Deployer:", deployer.address);
-    console.log("Account balance:", (await ethers.provider.getBalance(deployer.address)).toString());
+    console.log("Deployer:", walletClient.account.address);
     console.log("");
 
-    // Get Identity Registry address from environment or hardcoded
-    const IDENTITY_REGISTRY_ADDRESS = process.env.IDENTITY_REGISTRY_ADDRESS;
+    const IDENTITY_REGISTRY_ADDRESS = process.env.IDENTITY_REGISTRY_ADDRESS as `0x${string}`;
 
     if (!IDENTITY_REGISTRY_ADDRESS) {
         console.error("ERROR: IDENTITY_REGISTRY_ADDRESS not set");
-        console.error("Please set it in .env or as environment variable");
         process.exit(1);
     }
 
     console.log("Identity Registry:", IDENTITY_REGISTRY_ADDRESS);
     console.log("");
 
-    // Connect to registry
-    const registry = await ethers.getContractAt("IdentityRegistry", IDENTITY_REGISTRY_ADDRESS);
+    const registry = await hre.viem.getContractAt(
+        "IdentityRegistry",
+        IDENTITY_REGISTRY_ADDRESS
+    );
 
     console.log("\nStarting registration...");
 
-    // Register each agent
     for (let i = 0; i < TEST_AGENTS.length; i++) {
         const agent = TEST_AGENTS[i];
         if (!agent) continue;
@@ -157,26 +158,11 @@ async function main() {
         console.log(`[${i + 1}/${TEST_AGENTS.length}] Registering: ${agent.name}`);
 
         try {
-            const tx = await (registry as any).register(agent.agentURI);
-            const receipt = await tx.wait();
-
-            // Find the Registered event to get the agentId
-            const event = receipt?.logs.find((log: any) => {
-                try {
-                    const parsed = registry.interface.parseLog(log);
-                    return parsed?.name === "Registered";
-                } catch {
-                    return false;
-                }
-            });
-
-            if (event) {
-                const parsed = registry.interface.parseLog(event);
-                console.log(`    Agent ID: ${parsed?.args.agentId}`);
-                console.log(`    TX: ${receipt?.hash}`);
-            }
+            const hash = await registry.write.register([agent.agentURI]);
+            const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
             console.log(`    Status: Success`);
+            console.log(`    TX: ${hash}`);
         } catch (error: any) {
             console.log(`    Status: Failed - ${error.message}`);
         }

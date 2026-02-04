@@ -407,7 +407,7 @@ agentRoutes.post('/', async (req: Request, res: Response) => {
 agentRoutes.post('/:id/validate', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const numericId = parseInt(id, 10);
+        const numericId = parseInt(id as string, 10);
 
         const agent = await db.agent.findFirst({
             where: {
@@ -421,13 +421,31 @@ agentRoutes.post('/:id/validate', async (req: Request, res: Response) => {
             return;
         }
 
-        // Trigger scan by resetting lastChecked on all endpoints
-        await db.endpoint.updateMany({
-            where: { agentId: agent.agentId },
-            data: { lastChecked: null },
+        // Explicitly create a ScanJob (On-Demand)
+        const existingJob = await db.scanJob.findFirst({
+            where: {
+                endpointId: agent.endpoints[0]?.id,
+                status: { in: ['PENDING', 'PROCESSING'] }
+            }
         });
 
-        res.json({ message: 'Validation triggered. The scanner will process it momentarily.' });
+        if (!existingJob && agent.endpoints[0]) {
+            await db.scanJob.create({
+                data: {
+                    agentId: agent.agentId,
+                    endpointId: agent.endpoints[0].id,
+                    url: agent.endpoints[0].endpoint,
+                    status: 'PENDING',
+                    nextRunAt: new Date(), // Run immediately
+                }
+            });
+        }
+
+        res.json({
+            message: 'Validation queued.',
+            agentId: agent.agentId.toString(),
+            status: existingJob ? 'Already in queue' : 'Created'
+        });
         return;
     } catch (error: any) {
         console.error('Error triggering validation:', error);

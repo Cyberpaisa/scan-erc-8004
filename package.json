@@ -14,7 +14,7 @@
     "build": "npm run build --workspaces --if-present",
     "dev": "echo 'Run each app separately: cd apps/api && npm run dev'",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules",
+    "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules package-lock.json",
     "db:generate": "npm run prisma:generate --workspace=@scanner/db",
     "db:migrate": "npm run prisma:migrate --workspace=@scanner/db",
     "db:push": "npm run prisma:push --workspace=@scanner/db",
@@ -23,6 +23,13 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "typescript": "^5.7.0"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "lodash": "^4.17.23",
+    "undici": "^6.21.1",
+    "tmp": "^0.2.5",
+    "elliptic": "6.6.1"
   }
 }

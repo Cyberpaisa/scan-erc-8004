@@ -11,7 +11,7 @@ import { handleIdentityEvents } from './handlers/identity.js';
 import { handleReputationEvents } from './handlers/reputation.js';
 import { handleValidationEvents } from './handlers/validation.js';
 import { runHydrationCycle } from './hydration.js';
-import { runPeriodicScanCycle } from './sentinel.js';
+import { runPeriodicScanCycle, processScanJobs } from '@scanner/sentinel';
 
 // ==============================================
 // SETUP
@@ -176,6 +176,7 @@ async function main(): Promise<void> {
 
             console.log('\n--- Starting Sentinel Cycle ---');
             await runPeriodicScanCycle();
+            await processScanJobs();
         } catch (error) {
             console.error('Worker cycle error:', error);
         }

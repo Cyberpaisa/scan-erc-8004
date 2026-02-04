@@ -8,8 +8,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ==============================================
@@ -227,6 +227,7 @@ model FeedbackResponse {
   
   feedback      Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
   
+  @@unique([feedbackId, responderAddress, createdTx])
   @@index([feedbackId])
   @@index([responderAddress])
 }
@@ -330,6 +331,7 @@ model MetadataTask {
 
   agent         Agent         @relation(fields: [agentId], references: [agentId], onDelete: Cascade)
 
+  @@unique([agentId, uri, type])
   @@index([status, nextRunAt])
   @@index([agentId])
 }

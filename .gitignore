@@ -3,10 +3,13 @@ node_modules/
 .pnpm-store/
 
 # Build outputs
-dist/
-.next/
-out/
-build/
+**/dist/
+**/.next/
+**/out/
+**/build/
+**/cache/
+**/artifacts/
+**/typechain-types/
 
 # Environment
 .env
@@ -40,9 +43,18 @@ packages/contracts/cache/
 packages/contracts/artifacts/
 packages/contracts/typechain-types/
 
-# Coverage
-coverage/
-.nyc_output/
+# Build artifacts (co-located)
+**/*.js
+**/*.js.map
+**/*.d.ts
+**/*.d.ts.map
+**/*.tsbuildinfo
+!**/*.ts
+!**/*.tsx
+!**/package.json
+!**/tsconfig.json
+!**/package-lock.json
 
-# Misc
-*.tsbuildinfo
+# Tooling/Internal
+.agent/
+temp_abi*.json

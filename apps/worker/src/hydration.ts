@@ -67,18 +67,36 @@ async function processTask(task: MetadataTask): Promise<void> {
                     image: metadata.image,
                     active: metadata.active ?? false,
                     x402Support: metadata.x402Support ?? false,
-                    supportedTrust: metadata.supportedTrust ?? [],
+                    supportedTrust: Array.isArray(metadata.supportedTrust)
+                        ? metadata.supportedTrust.join(',')
+                        : (metadata.supportedTrust ?? null),
                     agentHash,
                     lastHydratedAt: new Date(),
                 },
             });
 
-            // Refresh endpoints
-            await tx.endpoint.deleteMany({ where: { agentId } });
+            // Atomic endpoint update (upsert)
+            const currentEndpoints = await tx.endpoint.findMany({ where: { agentId } });
+            const newNames = new Set(services.map(s => s.name));
 
+            // Remove endpoints no longer in metadata
+            await tx.endpoint.deleteMany({
+                where: {
+                    agentId,
+                    name: { notIn: Array.from(newNames) }
+                }
+            });
+
+            // Upsert remaining/new endpoints
             for (const service of services) {
-                await tx.endpoint.create({
-                    data: {
+                await tx.endpoint.upsert({
+                    where: {
+                        // We assume (agentId, name) is a logical unique pair for this refactor
+                        // but since schema doesn't have it, we use find + create/update or a unique constraint
+                        // For now, we'll use find if unique missing, or just update by name
+                        id: currentEndpoints.find(e => e.name === service.name)?.id ?? -1
+                    },
+                    create: {
                         agentId,
                         name: service.name,
                         endpoint: service.endpoint,
@@ -87,6 +105,13 @@ async function processTask(task: MetadataTask): Promise<void> {
                         skills: service.skills ? { data: service.skills } : undefined,
                         domains: service.domains ? { data: service.domains } : undefined,
                     },
+                    update: {
+                        endpoint: service.endpoint,
+                        version: service.version,
+                        capabilities: service.capabilities ? { data: service.capabilities } : undefined,
+                        skills: service.skills ? { data: service.skills } : undefined,
+                        domains: service.domains ? { data: service.domains } : undefined,
+                    }
                 });
             }
         });

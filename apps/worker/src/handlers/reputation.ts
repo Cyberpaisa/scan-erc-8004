@@ -168,8 +168,15 @@ async function handleResponseAppended(
         return;
     }
 
-    await db.feedbackResponse.create({
-        data: {
+    await db.feedbackResponse.upsert({
+        where: {
+            feedbackId_responderAddress_createdTx: {
+                feedbackId: feedback.id,
+                responderAddress: args.responder,
+                createdTx: log.transactionHash ?? '',
+            }
+        },
+        create: {
             feedbackId: feedback.id,
             responderAddress: args.responder,
             responseURI: args.responseURI || null,
@@ -177,6 +184,10 @@ async function handleResponseAppended(
             createdBlock: log.blockNumber ?? 0n,
             createdTx: log.transactionHash ?? '',
         },
+        update: {
+            responseURI: args.responseURI || null,
+            responseHash: args.responseHash || null,
+        }
     });
 
     console.log(`    ✓ Response appended`);

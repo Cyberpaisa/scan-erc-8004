@@ -89,17 +89,28 @@ async function handleRegistered(
         },
     });
 
-    // Create async hydration task
+    // Create async hydration task (idempotent)
     if (args.agentURI) {
-        await db.metadataTask.create({
-            data: {
+        await db.metadataTask.upsert({
+            where: {
+                agentId_uri_type: {
+                    agentId: agent.agentId,
+                    uri: args.agentURI,
+                    type: 'AGENT_METADATA',
+                }
+            },
+            create: {
                 agentId: agent.agentId,
                 uri: args.agentURI,
                 type: 'AGENT_METADATA',
                 status: 'PENDING',
             },
+            update: {
+                status: 'PENDING', // Reset if it was failed/completed to re-hydrate if needed
+                updatedAt: new Date(),
+            }
         });
-        console.log(`    → Created hydration task for Agent #${agent.agentId}`);
+        console.log(`    → Created/Updated hydration task for Agent #${agent.agentId}`);
     }
 }
 
@@ -117,16 +128,27 @@ async function handleURIUpdated(
         },
     });
 
-    // Create async hydration task for updated URI
-    await db.metadataTask.create({
-        data: {
+    // Create async hydration task for updated URI (idempotent)
+    await db.metadataTask.upsert({
+        where: {
+            agentId_uri_type: {
+                agentId: args.agentId,
+                uri: args.newURI,
+                type: 'AGENT_METADATA',
+            }
+        },
+        create: {
             agentId: args.agentId,
             uri: args.newURI,
             type: 'AGENT_METADATA',
             status: 'PENDING',
         },
+        update: {
+            status: 'PENDING',
+            updatedAt: new Date(),
+        }
     });
-    console.log(`    → Created hydration task (update) for Agent #${args.agentId}`);
+    console.log(`    → Created/Updated hydration task (update) for Agent #${args.agentId}`);
 }
 
 async function handleMetadataSet(
@@ -135,8 +157,8 @@ async function handleMetadataSet(
 ): Promise<void> {
     console.log(`  → MetadataSet: Agent #${args.agentId} key=${args.metadataKey}`);
 
-    // Convert hex to bytes
-    const valueBytes = Buffer.from(args.metadataValue.slice(2), 'hex');
+    // Convert hex to bytes (unused for now as schema expects string)
+    // const valueBytes = Buffer.from(args.metadataValue.slice(2), 'hex');
 
     await db.agentMetadata.upsert({
         where: {
@@ -148,10 +170,10 @@ async function handleMetadataSet(
         create: {
             agentId: args.agentId,
             metadataKey: args.metadataKey,
-            metadataValue: valueBytes,
+            metadataValue: args.metadataValue,
         },
         update: {
-            metadataValue: valueBytes,
+            metadataValue: args.metadataValue,
             updatedAt: new Date(),
         },
     });
