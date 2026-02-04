@@ -25,6 +25,9 @@ interface Agent {
     }>;
     feedbackCount: number;
     validationCount: number;
+    totalVolume?: string;
+    txCount?: number;
+    lastPaymentAt?: string;
     registeredAt: string;
 }
 
@@ -145,26 +148,58 @@ export default function HomePage() {
                         />
                         <span className={styles.searchIcon}>🔍</span>
                     </div>
+                    {/* Ranking Section */}
+                    <section className={styles.rankingSection} id="ranking">
+                        <h2 className={styles.rankingTitle}>
+                            <span className={styles.rankingEmoji}>🏆</span> Top Agents by Volume
+                        </h2>
+                        <div className={styles.rankingGrid}>
+                            {agents
+                                .filter(a => Number(a.totalVolume || 0) > 0)
+                                .sort((a, b) => Number(b.totalVolume || 0) - Number(a.totalVolume || 0))
+                                .slice(0, 4)
+                                .map((agent, index) => (
+                                    <div key={agent.id} className={styles.rankingItem}>
+                                        <div className={styles.rankNumber}>#{index + 1}</div>
+                                        <div className={styles.rankInfo}>
+                                            <div className={styles.rankName}>{agent.name || `Agent #${agent.agentId}`}</div>
+                                            <div className={styles.rankVolume}>
+                                                {(Number(agent.totalVolume) / 1e18).toFixed(2)} AVAX
+                                            </div>
+                                            <div className={styles.statLabel}>{agent.txCount} txs</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            {agents.filter(a => Number(a.totalVolume || 0) > 0).length === 0 && (
+                                <div className={styles.emptyState} style={{ gridColumn: '1 / -1', padding: '20px' }}>
+                                    <p>Waiting for transaction data...</p>
+                                </div>
+                            )}
+                        </div>
+                    </section>
 
-                    <div className={styles.filters}>
-                        <button
-                            className={`btn btn-secondary ${styles.filterBtn} ${filter === 'all' ? styles.activeFilter : ''}`}
-                            onClick={() => setFilter('all')}
-                        >
-                            All
-                        </button>
-                        <button
-                            className={`btn btn-secondary ${styles.filterBtn} ${filter === 'active' ? styles.activeFilter : ''}`}
-                            onClick={() => setFilter('active')}
-                        >
-                            Active
-                        </button>
-                        <button
-                            className={`btn btn-secondary ${styles.filterBtn} ${filter === 'x402' ? styles.activeFilter : ''}`}
-                            onClick={() => setFilter('x402')}
-                        >
-                            x402
-                        </button>
+                    <div className={styles.sectionHeader} style={{ marginTop: '48px' }}>
+                        <h2>Directory</h2>
+                        <div className={styles.filters}>
+                            <button
+                                className={`btn btn-secondary ${styles.filterBtn} ${filter === 'all' ? styles.activeFilter : ''}`}
+                                onClick={() => setFilter('all')}
+                            >
+                                All
+                            </button>
+                            <button
+                                className={`btn btn-secondary ${styles.filterBtn} ${filter === 'active' ? styles.activeFilter : ''}`}
+                                onClick={() => setFilter('active')}
+                            >
+                                Active
+                            </button>
+                            <button
+                                className={`btn btn-secondary ${styles.filterBtn} ${filter === 'x402' ? styles.activeFilter : ''}`}
+                                onClick={() => setFilter('x402')}
+                            >
+                                x402
+                            </button>
+                        </div>
                     </div>
 
                     {loading ? (
@@ -226,7 +261,7 @@ export default function HomePage() {
                                             </p>
                                         )}
 
-                                        <div className={styles.agentBadges}>
+                                        <div className={styles.agentBadges} style={{ marginBottom: '8px' }}>
                                             {agent.active && (
                                                 <span className="badge badge-success">● Active</span>
                                             )}
@@ -236,9 +271,9 @@ export default function HomePage() {
                                             {agent.x402Support && (
                                                 <span className="badge badge-accent">x402</span>
                                             )}
-                                            {agent.endpoints.length > 0 && (
-                                                <span className="badge badge-info">
-                                                    {agent.endpoints.length} endpoints
+                                            {Number(agent.totalVolume || 0) > 0 && (
+                                                <span className={styles.volumeTag}>
+                                                    {(Number(agent.totalVolume) / 1e18).toFixed(1)} AVAX
                                                 </span>
                                             )}
                                         </div>

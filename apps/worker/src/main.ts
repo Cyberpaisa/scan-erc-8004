@@ -12,6 +12,7 @@ import { handleReputationEvents } from './handlers/reputation.js';
 import { handleValidationEvents } from './handlers/validation.js';
 import { runHydrationCycle } from './hydration.js';
 import { runPeriodicScanCycle, processScanJobs } from '@scanner/sentinel';
+import { processFinancialMetrics } from './handlers/payment.js';
 
 // ==============================================
 // SETUP
@@ -177,6 +178,9 @@ async function main(): Promise<void> {
             console.log('\n--- Starting Sentinel Cycle ---');
             await runPeriodicScanCycle();
             await processScanJobs();
+
+            console.log('\n--- Starting Financial Metrics Cycle ---'); // Added log
+            await processFinancialMetrics(); // Added call
         } catch (error) {
             console.error('Worker cycle error:', error);
         }

@@ -38,8 +38,10 @@ model Agent {
   // Integrity
   agentHash       String?   // keccak256 of canonical JSON
   
-  // On-chain metadata
-  agentWallet     String?  
+  // Financial metrics (Ranking por Volumen)
+  totalVolume     BigInt   @default(0)
+  txCount         Int      @default(0)
+  lastPaymentAt   DateTime?
   
   // Timestamps
   registeredAt    DateTime @default(now())
